@@ -1,14 +1,26 @@
 import { useEffect, useState } from "react";
-import { Window, WindowHeader, WindowContent, Button, Avatar } from "react95";
+import {
+  Window,
+  WindowHeader,
+  WindowContent,
+  Button,
+  Avatar,
+  Slider,
+  Toolbar,
+  ProgressBar,
+} from "react95";
 import { API_URL, fetchCurrentSong } from "../services/api";
 import { useGlobalAudioPlayer } from "react-use-audio-player";
 
 const AudioPlayer = () => {
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [bufferingProgress, setBufferingProgress] = useState(0);
   const audioUrl = `${API_URL}/stream`;
-  const { load } = useGlobalAudioPlayer();
+  const { load, pause, setVolume, getPosition } = useGlobalAudioPlayer();
 
+  // Fetch current song every 10 seconds
   useEffect(() => {
     const getCurrentSong = async () => {
       try {
@@ -24,8 +36,9 @@ const AudioPlayer = () => {
     getCurrentSong();
     const intervalId = setInterval(getCurrentSong, 10000);
     return () => clearInterval(intervalId);
-  });
+  }, [currentSong]);
 
+  // Update media session metadata when current song changes
   useEffect(() => {
     if (currentSong && "mediaSession" in navigator) {
       const { mediaSession } = navigator;
@@ -35,44 +48,166 @@ const AudioPlayer = () => {
         album: currentSong.album,
         artwork: [
           {
-            src: currentSong.artUrl || "@public/album-art-placeholder.png",
+            src: currentSong.artUrl,
             sizes: "100x100",
             type: "image/png",
           },
         ],
       });
+      mediaSession.setActionHandler("play", handleTuneIn);
+      mediaSession.setActionHandler("pause", handleTuneOut);
+      mediaSession.setActionHandler("previoustrack", null);
+      mediaSession.setActionHandler("nexttrack", null);
+      mediaSession.setActionHandler("seekbackward", null);
+      mediaSession.setActionHandler("seekforward", null);
     }
   }, [currentSong]);
 
-  const handlePlay = () => {
-    const audioElements = document.querySelectorAll("audio");
-    audioElements.forEach((el) => el.remove());
+  // Buffering effect when starting to play
+  useEffect(() => {
+    setBufferingProgress(0);
+    let progressInterval;
 
+    if (isPlaying) {
+      const startTime = Date.now();
+      setIsBuffering(true);
+
+      progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const smoothProgress = Math.min((elapsedTime / 18000) * 100, 100);
+
+        setBufferingProgress((prevProgress) => {
+          if (prevProgress >= 100) return 100;
+          const diff = Math.random() * 10;
+          const choppyProgress = Math.min(prevProgress + diff, smoothProgress);
+
+          return choppyProgress;
+        });
+
+        if (getPosition() > 0) {
+          setBufferingProgress(100);
+          setTimeout(() => setIsBuffering(false), 300);
+        }
+      }, 500);
+
+      return () => clearInterval(progressInterval);
+    }
+  }, [isPlaying, getPosition]);
+
+  // Forces stream to be live on play instead of playing from cache
+  const handlePlay = () => {
+    setIsBuffering(true);
     load(`${audioUrl}?t=${new Date().getTime()}`, {
       autoplay: true,
       html5: true,
       format: "mp3",
-      onpause: () => setIsPlaying(false),
     });
+  };
+
+  const handleTuneIn = () => {
+    handlePlay();
     setIsPlaying(true);
   };
+
+  const handleTuneOut = () => {
+    pause();
+    setIsPlaying(false);
+    setIsBuffering(false);
+  };
+
+  const handleVolumeChange = (value) => {
+    setVolume(value / 100);
+  };
+
   return (
-    <Window>
+    <Window style={{ width: "100%" }}>
       <WindowHeader>Now Playing</WindowHeader>
-      <WindowContent>
-        {currentSong?.title ? (
-          <>
-            <Avatar square size={300} src={currentSong.artUrl} />
-            <h2>{currentSong.title}</h2>
-            <p>{currentSong.artist}</p>
-            <p>{currentSong.album}</p>
-          </>
-        ) : (
-          <p>Loading song data...</p>
-        )}
-        {!isPlaying ? (
-          <Button onClick={handlePlay}>Start Listening</Button>
-        ) : null}
+      <WindowContent
+        style={{ display: "flex", flexDirection: "column", height: "100%" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "300px", // Maximum size for larger screens
+              aspectRatio: "1", // Maintains 1:1 aspect ratio
+            }}
+          >
+            <Avatar
+              square
+              src={currentSong?.artUrl}
+              style={{
+                width: "100%",
+                height: "auto", // Maintain aspect ratio
+                display: "block",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              marginTop: 16,
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              {currentSong?.title ? (
+                <>
+                  <h2>{currentSong.title}</h2>
+                  <p>{currentSong.artist}</p>
+                  <p>{currentSong.album}</p>
+                </>
+              ) : (
+                <>
+                  <h2>Not Playing</h2>
+                  <p>Not Playing</p>
+                  <p>Not Playing</p>
+                </>
+              )}
+            </div>
+            <div style={{ width: 150, marginLeft: 16 }}>
+              <Slider
+                min={0}
+                max={100}
+                defaultValue={75}
+                onChange={handleVolumeChange}
+              />
+            </div>
+          </div>
+          {isBuffering && (
+            <ProgressBar
+              variant="tile"
+              value={bufferingProgress}
+              style={{ marginTop: 16, width: "100%" }}
+            />
+          )}
+        </div>
+        <div style={{ flex: 1 }}></div>
+        <Toolbar style={{ display: "flex", padding: 8 }}>
+          <Button
+            onClick={handleTuneIn}
+            active={isPlaying}
+            disabled={isPlaying}
+            style={{ flex: 1, marginRight: 4 }}
+          >
+            Tune In
+          </Button>
+          <Button
+            onClick={handleTuneOut}
+            active={!isPlaying}
+            disabled={!isPlaying}
+            style={{ flex: 1, marginLeft: 4 }}
+          >
+            Tune Out
+          </Button>
+        </Toolbar>
       </WindowContent>
     </Window>
   );

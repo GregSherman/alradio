@@ -40,7 +40,7 @@ const GlobalStyles = createGlobalStyle`
     background-color: #C25F9C;
   }
 
-    /* Scanline effect */
+  /* Scanline effect */
   body::before {
     content: '';
     position: fixed;
@@ -79,7 +79,6 @@ const Container = styled(Window)`
   }
 `;
 
-// prevent horizontal scrolling, even when the content is too wide
 const StyledScrollView = styled(ScrollView)`
   height: calc(100% - 30px);
   overflow-x: hidden;
@@ -92,15 +91,38 @@ const StyledScrollView = styled(ScrollView)`
   -ms-overflow-style: none;
 `;
 
+// Flex container for listener count and AL Radio text
+const HeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const RadioTitle = styled.h1`
+  font-size: 3rem;
+  margin: 0;
+  text-align: right;
+  padding-right: 10px;
+  flex-grow: 1;
+  color: #88416b; /* Pink color */
+  text-shadow:
+    1px 1px 0 #fff,
+    /* White shadow on the top-left */ 2px 2px 0 #ccc,
+    /* Light gray shadow for depth */ 3px 3px 0 #999,
+    /* Darker gray shadow for more depth */ 4px 4px 0 #666; /* Darkest shadow for the 3D effect */
+`;
+
 export default function Home() {
   return (
     <div>
       <GlobalStyles />
       <ThemeProvider theme={candy}>
         <Container>
-          <WindowHeader>AL Radio</WindowHeader>
           <StyledScrollView>
-            <ListenerCount />
+            <HeaderContainer>
+              <ListenerCount />
+              <RadioTitle>AL Radio</RadioTitle>
+            </HeaderContainer>
             <AudioPlayer />
             <NextSong />
             <SubmitSong />

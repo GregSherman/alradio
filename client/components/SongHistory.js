@@ -15,7 +15,17 @@ import { fetchSongHistory } from "../services/api";
 import GetSong from "./GetSong";
 
 const SongHistory = () => {
-  const [songHistory, setSongHistory] = useState([]);
+  const [songHistory, setSongHistory] = useState([
+    {
+      title: "Loading...",
+      artist: "Loading...",
+      artUrl: "",
+      urlForPlatform: {
+        spotify: "default",
+        appleMusic: "default",
+      },
+    },
+  ]);
   const [selectedSong, setSelectedSong] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
