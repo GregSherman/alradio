@@ -10,12 +10,10 @@ import {
   TableRow,
   TableDataCell,
   Avatar,
-  ScrollView, // Import ScrollView
+  ScrollView,
 } from "react95";
 import { fetchSongHistory } from "../services/api";
 import GetSong from "./GetSong";
-import { Rnd } from "react-rnd";
-import { useZIndex } from "@/contexts/ZIndexContext";
 
 const SongHistory = () => {
   const [songHistory, setSongHistory] = useState([
@@ -31,8 +29,6 @@ const SongHistory = () => {
   ]);
   const [selectedSong, setSelectedSong] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [zIndex, setZIndex] = useState(1);
-  const bringToFront = useZIndex();
 
   useEffect(() => {
     const getSongHistory = async () => {
@@ -59,31 +55,12 @@ const SongHistory = () => {
     setSelectedSong(null);
   };
 
-  const handleInteraction = () => {
-    setZIndex(bringToFront());
-  };
-
   return (
-    <Rnd
-      bounds="parent"
-      dragHandleClassName="window-header"
-      style={{ zIndex }}
-      enableResizing={false}
-      onDragStart={handleInteraction}
-      onResizeStart={handleInteraction}
-      onMouseDown={handleInteraction}
-      default={{
-        x: 500,
-        y: 500,
-      }}
-    >
+    <>
       <Window>
         <WindowHeader className="window-header">History</WindowHeader>
         <WindowContent>
-          <ScrollView
-            style={{ height: "400px" }} // Set a fixed height
-            scrollable
-          >
+          <ScrollView style={{ height: "400px" }} scrollable>
             <Table>
               <TableHead>
                 <TableHeadCell></TableHeadCell>
@@ -113,7 +90,7 @@ const SongHistory = () => {
           urlForPlatform={selectedSong.urlForPlatform}
         />
       )}
-    </Rnd>
+    </>
   );
 };
 

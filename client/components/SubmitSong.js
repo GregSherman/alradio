@@ -7,8 +7,6 @@ import {
   WindowContent,
 } from "react95";
 import { API_URL } from "../services/api";
-import { Rnd } from "react-rnd";
-import { useZIndex } from "@/contexts/ZIndexContext";
 
 const SubmitSong = () => {
   const [query, setQuery] = useState("");
@@ -16,8 +14,6 @@ const SubmitSong = () => {
   const [songMetadata, setSongMetadata] = useState(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [notification, setNotification] = useState("");
-  const [zIndex, setZIndex] = useState(1);
-  const bringToFront = useZIndex();
 
   const handleQueryChange = (e) => setQuery(e.target.value);
 
@@ -83,56 +79,36 @@ const SubmitSong = () => {
     setTimeout(() => setNotification(""), 5000);
   };
 
-  const handleInteraction = () => {
-    setZIndex(bringToFront());
-  };
-
   return (
-    <Rnd
-      bounds="parent"
-      dragHandleClassName="window-header"
-      style={{ zIndex }}
-      enableResizing={false}
-      onDragStart={handleInteraction}
-      onResizeStart={handleInteraction}
-      onMouseDown={handleInteraction}
-      default={{
-        x: 500,
-        y: 500,
-      }}
-    >
-      <Window>
-        <WindowHeader className="window-header">Submit a Song</WindowHeader>
-        <WindowContent>
-          <div style={{ display: "flex" }}>
-            <TextInput
-              value={query}
-              onChange={handleQueryChange}
-              placeholder="Search for a song..."
-              fullWidth
-            />
-            <Button onClick={handleSubmit} type="submit">
-              Request
-            </Button>
+    <Window>
+      <WindowHeader className="window-header">Submit a Song</WindowHeader>
+      <WindowContent>
+        <div style={{ display: "flex" }}>
+          <TextInput
+            value={query}
+            onChange={handleQueryChange}
+            placeholder="Search for a song..."
+            fullWidth
+          />
+          <Button onClick={handleSubmit} type="submit">
+            Request
+          </Button>
+        </div>
+        {isConfirming && songMetadata && (
+          <div>
+            <h3>Confirm Song</h3>
+            <p>Title: {songMetadata.title}</p>
+            <p>Artist: {songMetadata.artist}</p>
+            <p>Album: {songMetadata.album}</p>
+            <Button onClick={() => handleConfirm()}>Confirm</Button>
+            <Button onClick={handleCancel}>Cancel</Button>
           </div>
-          {isConfirming && songMetadata && (
-            <div>
-              <h3>Confirm Song</h3>
-              <p>Title: {songMetadata.title}</p>
-              <p>Artist: {songMetadata.artist}</p>
-              <p>Album: {songMetadata.album}</p>
-              <Button onClick={() => handleConfirm()}>Confirm</Button>
-              <Button onClick={handleCancel}>Cancel</Button>
-            </div>
-          )}
-          {notification && (
-            <div style={{ marginTop: 10, color: "magenta" }}>
-              {notification}
-            </div>
-          )}
-        </WindowContent>
-      </Window>
-    </Rnd>
+        )}
+        {notification && (
+          <div style={{ marginTop: 10, color: "magenta" }}>{notification}</div>
+        )}
+      </WindowContent>
+    </Window>
   );
 };
 
