@@ -1,23 +1,22 @@
+// pages/index.js
 import React from "react";
-import {
-  styleReset,
-  ScrollView,
-  WindowHeader,
-  WindowContent,
-  Window,
-} from "react95";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
-import styled from "styled-components";
+import { styleReset } from "react95";
+import { ZIndexProvider } from "../contexts/ZIndexContext";
 import candy from "react95/dist/themes/candy";
 import ms_sans_serif from "react95/dist/fonts/ms_sans_serif.woff2";
 import ms_sans_serif_bold from "react95/dist/fonts/ms_sans_serif_bold.woff2";
+import styled from "styled-components";
 
 import AudioPlayer from "@/components/AudioPlayer";
 import SongHistory from "@/components/SongHistory";
 import NextSong from "@/components/NextSong";
 import ListenerCount from "@/components/ListenerCount";
 import SubmitSong from "@/components/SubmitSong";
+import TopBar from "@/components/TopBar";
+import { useState } from "react";
 
+// Global Styles with scanline effect
 const GlobalStyles = createGlobalStyle`
   ${styleReset}
   @font-face {
@@ -37,7 +36,12 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    background-color: #C25F9C;
+    background-color: ${({ theme }) => theme.headerBackground};
+    /* Prevent text selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
   /* Scanline effect */
@@ -55,81 +59,59 @@ const GlobalStyles = createGlobalStyle`
       rgba(255, 255, 255, 0.1) 1px,
       rgba(255, 255, 255, 0.1) 2px
     );
-    z-index: 10; /* Ensure it is above the body but below the content */
-    pointer-events: none; /* Allow interaction with underlying content */
+    z-index: 1000;
+    pointer-events: none;
   }
 `;
 
-const Container = styled(Window)`
-  width: 500px;
-  height: 750px;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  overflow: hidden;
-
-  @media (max-height: 750px) {
-    height: 100%;
-  }
-
-  @media (max-width: 500px) {
-    width: 100%;
-    height: 100%;
-  }
-`;
-
-const StyledScrollView = styled(ScrollView)`
-  height: calc(100% - 30px);
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-`;
-
-// Flex container for listener count and AL Radio text
-const HeaderContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
+// Styled title for the application
 const RadioTitle = styled.h1`
-  font-size: 3rem;
+  font-size: 5rem;
   margin: 0;
   text-align: right;
-  padding-right: 10px;
   flex-grow: 1;
-  color: #88416b; /* Pink color */
+  color: ${({ theme }) => theme.tooltip};
   text-shadow:
     1px 1px 0 #fff,
-    /* White shadow on the top-left */ 2px 2px 0 #ccc,
-    /* Light gray shadow for depth */ 3px 3px 0 #999,
-    /* Darker gray shadow for more depth */ 4px 4px 0 #666; /* Darkest shadow for the 3D effect */
+    2px 2px 0 #ccc,
+    3px 3px 0 #999,
+    4px 4px 0 #666;
+  width: 100%;
+  margin-right: 20px;
+`;
+
+// Create ContentContainer with margin-top equal to the height of the TopBar
+const ContentContainer = styled.div`
+  margin-top: 40px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: calc(100vh - 40px);
+  box-sizing: border-box;
 `;
 
 export default function Home() {
+  const [theme, setTheme] = useState(candy);
+  const toggleTheme = (newTheme) => {
+    setTheme(newTheme);
+  };
+
   return (
-    <div>
-      <GlobalStyles />
-      <ThemeProvider theme={candy}>
-        <Container>
-          <StyledScrollView>
-            <HeaderContainer>
-              <ListenerCount />
-              <RadioTitle>AL Radio</RadioTitle>
-            </HeaderContainer>
-            <AudioPlayer />
-            <NextSong />
-            <SubmitSong />
-            <SongHistory />
-          </StyledScrollView>
-        </Container>
+    <ZIndexProvider>
+      <ThemeProvider theme={theme}>
+        <GlobalStyles />
+        <TopBar onToggleTheme={toggleTheme} />
+        <ContentContainer>
+          <RadioTitle>AL Radio</RadioTitle>
+          <ListenerCount />
+          <AudioPlayer />
+          <NextSong />
+          <SubmitSong />
+          <SongHistory />
+        </ContentContainer>
       </ThemeProvider>
-    </div>
+    </ZIndexProvider>
   );
 }
