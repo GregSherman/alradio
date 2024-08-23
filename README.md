@@ -1,23 +1,9 @@
-# AL Radio
+# AL Radio Server
 
+The server for AL Radio.
 
-Community driven radio station with host AL.
+## Setup
 
-AL Radio uses `gpt-4o-mini` to generate an introduction for each song and OpenAI's Text-to-Speech models to announce it.
-
-AL Radio uses the Spotify API to gather song metadata and recommendations based off of previous songs as to maintain a general genre
-
-AL Radio accepts song requests in the form of a search query, a Spotify Track ID, or a Spotify Track URL. These requests are given priority over the recommendation algorithm, allowing users to shift the genre of the station over time.
-
-<div style="text-align: center;">
-  <img src="repo/desktop.png" alt="Desktop version"/>
-  <img src="repo/mobile.png" alt="Mobile version" width="300"/>
-</div>
-
-
-## Setup Server
-
-- `cd server`
 - `npm i`
 - FFmpeg: `brew install ffmpeg` or your system equivalent.
 - SpotDL: `pip install spotdl`.
@@ -77,29 +63,15 @@ Add your initial Spotify Track IDs separated by a comma. These will get added to
 INITIAL_TRACK_IDS=0HNYFFOwID6HGSqy5xr4av,3f1yAg2u74Wn8Jj14zhJGS,5gPNOBxIfT1Aap0Ji4L5xi,2T6esRR7vvAjJTYJFVIXxt,3NGpqL9pwQjWzb358tJMHM
 ```
 
-#### Client Port
+#### Port
 
-The client will exist on the port defined in `.env`, defaulting to `3000`.
+The server will exist on the port defined in `.env`, defaulting to `3000`.
 
 ```conf
 # .env
 PORT=12345
 ```
 
-## Setup Client
-
-- `cd client`
-- `npm i`
-- Populate `NEXT_PUBLIC_API_URL` in `.env.local`
-
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:3002
-```
-
 ## Run
 
-#### Server
-- `cd server && npm run start:local`
-
-#### Client
-- `cd client && npm run dev`
+- `npm run start:local`
