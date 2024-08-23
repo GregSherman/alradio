@@ -7,7 +7,6 @@ class OpenAiService {
   constructor() {
     this._baseUrl = "https://api.openai.com/v1";
     this._apiKey = process.env.OPENAI_API_KEY;
-    this._chatHistory = [];
     this._systemPrompt = `
     Your name is Al. You are a radio host at Al Radio, a Toronto-based radio station.
     Your task is to introduce the current song as a radio announcer.
@@ -20,8 +19,8 @@ class OpenAiService {
     Important: Be conversational. You're talking to a listener, not reading a script.
     This includes using modern slang, contractions, making mistakes, and being casual.
 
-    Important: Do not repeat yourself from previous introductions. Do not say "shift gears",
-    "spoiler", "let's dive in", "without further ado", "let's get started", "let's jump right in",
+    Important: Do not say "shift gears", "spoiler", "let's dive in", "without further ado",
+    "let's get started", "let's jump right in", or anything similar to these.
     `;
   }
 
@@ -35,7 +34,7 @@ class OpenAiService {
     For example: How does a Radiohead fan get home after a night out? They call their girlfriend.`,
     ];
     const jokePrefix =
-      "Add a joke relating to the song data. Do no introduce the joke, just say it. Ensure it adheres to the follwoing format: ";
+      "Add a joke relating to the song data. Do not introduce the joke, just say it. Ensure it adheres to the follwoing format: ";
 
     return Math.random() < 0.25
       ? `${this._systemPrompt}\n\n${jokePrefix + jokeFormats[Math.floor(Math.random() * jokeFormats.length)]}`
@@ -86,7 +85,6 @@ class OpenAiService {
         {
           messages: [
             { role: "system", content: systemPrompt },
-            ...this._chatHistory,
             { role: "user", content: userPrompt },
           ],
           model: "gpt-4o-mini",
@@ -102,19 +100,9 @@ class OpenAiService {
         },
       );
       const songIntro = response.data.choices[0].message.content;
-      this._addToChatHistory(userPrompt, songIntro);
       return songIntro;
     } catch (error) {
       throw new Error("Failed to generate song intro:", error);
-    }
-  }
-
-  _addToChatHistory(userPrompt, songIntro) {
-    this._chatHistory.push({ role: "user", content: userPrompt });
-    this._chatHistory.push({ role: "assistant", content: songIntro });
-    if (this._chatHistory.length % 2 > 3) {
-      this._chatHistory.shift();
-      this._chatHistory.shift();
     }
   }
 
