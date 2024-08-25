@@ -167,13 +167,16 @@ class SpotifyService {
           Authorization: `Bearer ${this.token}`,
         },
       });
+      if (!response.data) {
+        return;
+      }
       return await this._convertAndSaveSpotifyTrackMetadata(response.data);
     } catch (error) {
       if (error.response?.status === 401) {
         await this._authenticate();
         return this.getTrackData(trackId);
       }
-      throw new Error("Failed to get track data:", error);
+      console.log("Failed to get track data:", error);
     }
   }
 
