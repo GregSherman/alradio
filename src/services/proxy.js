@@ -1,6 +1,5 @@
 import axios from "axios";
 import { NoProxyError } from "../errors.js";
-import { HttpsProxyAgent } from "https-proxy-agent";
 
 class ProxyService {
   constructor() {
@@ -45,35 +44,12 @@ class ProxyService {
     this._activeProxy = {};
   }
 
-  async _testProxy(proxy) {
-    const speeds = [];
-    for (let i = 0; i < 3; i++) {
-      speeds.push(await this._getProxySpeedInMbps(proxy));
-    }
-    const averageSpeed = speeds.reduce((a, b) => a + b) / speeds.length;
-    console.log("Proxy speed (mbps):", averageSpeed);
-    return averageSpeed > 5;
-  }
-
-  async _getProxySpeedInMbps(proxy) {
-    const url = "https://api.alradio.live/speedtest";
-    console.log("Testing proxy speed:", proxy);
-    const agent = new HttpsProxyAgent(`http://${proxy.host}:${proxy.port}`);
-    const start = new Date();
-    await axios.get(url, { httpsAgent: agent });
-    const end = new Date();
-    const duration = end - start;
-    const speed = 0.18 / (duration / 1000);
-    console.log("Speed (mbps):", speed);
-    return speed;
-  }
-
   // Go through the proxy list and find a working proxy.
   // If no working proxies are found, refresh the list and try again.
   // If still no proxies are found, throw an error to end the program.
   async _getProxy(raise = false) {
     if (!this._apiUrl) return;
-    if (this._activeProxy.host && (await this._testProxy(this._activeProxy))) {
+    if (this._activeProxy.host) {
       return this._activeProxy;
     }
 
@@ -82,13 +58,8 @@ class ProxyService {
     while (failedAttempts < max) {
       const randomIndex = Math.floor(Math.random() * this._proxyList.length);
       const randomProxy = this._proxyList[randomIndex];
-      if (await this._testProxy(randomProxy)) {
-        this._activeProxy = randomProxy;
-        return randomProxy;
-      } else {
-        this._markProxyBad(randomProxy);
-        failedAttempts++;
-      }
+      this._activeProxy = randomProxy;
+      return randomProxy;
     }
 
     if (raise) {
