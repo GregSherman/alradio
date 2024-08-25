@@ -46,19 +46,26 @@ class ClientService extends EventEmitter {
   }
 
   async _handleSearchQuerySubmit(req, res, query) {
-    const track = await SpotifyService.searchTrack(query);
-    if (!track.trackId) {
-      res.json({ success: false, message: "Song not found" });
+    try {
+      const track = await SpotifyService.searchTrack(query);
+      if (!track?.trackId) {
+        res.json({ success: false, message: "Song not found" });
+        return;
+      }
+
+      res.json({ success: true, metadata: this._clientifyMetadata(track) });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
       return;
     }
-
-    res.json({ success: true, metadata: this._clientifyMetadata(track) });
   }
 
   async _handleDirectTrackSubmit(req, res, trackId) {
     const track = await SpotifyService.getTrackData(trackId);
     if (!track.trackId) {
       res.json({ success: false, message: "Song not found" });
+      console.log("Song not found");
       return;
     }
 
@@ -90,6 +97,11 @@ class ClientService extends EventEmitter {
   }
 
   async submitSongRequest(req, res) {
+    if (req.body.query.length > 256 || req.body.query.trim().length === 0) {
+      res.json({ success: false, message: "Song not found" });
+      return;
+    }
+
     if (QueueService.isUserQueueFull()) {
       res.json({ success: false, message: "The queue is full." });
       console.log("User queue is full");
@@ -110,7 +122,6 @@ class ClientService extends EventEmitter {
       trackId = query;
     }
 
-    // TODO: Need a check for if the song is in the process of downloading.
     if (trackId) {
       return this._handleDirectTrackSubmit(req, res, trackId);
     } else {

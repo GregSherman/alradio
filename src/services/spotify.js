@@ -78,6 +78,11 @@ class SpotifyService {
           limit: 1,
         },
       });
+
+      if (response.data.tracks.items.length === 0) {
+        return;
+      }
+
       return await this._convertAndSaveSpotifyTrackMetadata(
         response.data.tracks.items[0],
       );
@@ -150,7 +155,7 @@ class SpotifyService {
       urlForPlatform,
     };
 
-    await DBService.saveSongMetadata(metadata);
+    DBService.saveSongMetadata(metadata);
     return metadata;
   }
 
@@ -176,6 +181,11 @@ class SpotifyService {
     // Get recommendations based on last five played
     const lastFiveSongs = await DBService.getLastPlayedSongs(5);
     const lastFiveTrackIds = lastFiveSongs.map((track) => track.trackId);
+
+    if (lastFiveTrackIds.length === 0) {
+      throw new Error("No songs played yet. Cannot suggest songs.");
+    }
+
     let suggestions = await this.getRecommendations(lastFiveTrackIds);
 
     // Do not suggest songs that have been played in the last two hours

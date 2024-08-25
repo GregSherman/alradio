@@ -14,6 +14,11 @@ const corsOptions = {
 const app = express();
 app.use(cors(corsOptions));
 app.use(express.json());
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err.stack);
+  res.status(500).send("Something went wrong.");
+});
 app.use("/", songRoutes);
 
 const PORT = process.env.PORT || 3000;
