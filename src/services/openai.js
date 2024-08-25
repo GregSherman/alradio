@@ -34,7 +34,7 @@ class OpenAiService {
     For example: How does a Radiohead fan get home after a night out? They call their girlfriend.`,
     ];
     const jokePrefix =
-      "Add a joke relating to the song data. Do not introduce the joke, just say it. Ensure it adheres to the follwoing format: ";
+      "Add a joke relating to the song data. Do not introduce the joke, just say it. Ensure it adheres to the following format: ";
 
     return Math.random() < 0.25
       ? `${this._systemPrompt}\n\n${jokePrefix + jokeFormats[Math.floor(Math.random() * jokeFormats.length)]}`

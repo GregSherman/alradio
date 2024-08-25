@@ -9,6 +9,9 @@ router.get("/song", (req, res) =>
 router.get("/history", (req, res) => ClientService.getSongHistory(req, res));
 router.get("/next", (req, res) => ClientService.getNextSong(req, res));
 router.get("/listeners", (req, res) => ClientService.getListeners(req, res));
+router.get("/speedtest", (req, res) => {
+  res.sendFile("test.png", { root: "./public" });
+});
 
 router.post("/submit", (req, res) => ClientService.submitSongRequest(req, res));
 

@@ -46,21 +46,26 @@ class ProxyService {
   }
 
   async _testProxy(proxy) {
-    if (!this._apiUrl) return;
-    const testUrl = "https://httpbin.org/ip";
-    try {
-      console.log("Testing proxy:", proxy);
-      const agent = new HttpsProxyAgent(`http://${proxy.host}:${proxy.port}`);
-      await axios.get(testUrl, {
-        agent,
-        timeout: 5000,
-      });
-      console.log("Proxy passed test");
-      return true;
-    } catch (error) {
-      console.error("Proxy failed test:", error);
-      return false;
+    const speeds = [];
+    for (let i = 0; i < 3; i++) {
+      speeds.push(await this._getProxySpeedInMbps(proxy));
     }
+    const averageSpeed = speeds.reduce((a, b) => a + b) / speeds.length;
+    console.log("Proxy speed (mbps):", averageSpeed);
+    return averageSpeed > 5;
+  }
+
+  async _getProxySpeedInMbps(proxy) {
+    const url = "https://api.alradio.live/speedtest";
+    console.log("Testing proxy speed:", proxy);
+    const agent = new HttpsProxyAgent(`http://${proxy.host}:${proxy.port}`);
+    const start = new Date();
+    await axios.get(url, { httpsAgent: agent });
+    const end = new Date();
+    const duration = end - start;
+    const speed = 0.18 / (duration / 1000);
+    console.log("Speed (mbps):", speed);
+    return speed;
   }
 
   // Go through the proxy list and find a working proxy.
