@@ -63,7 +63,7 @@ class ClientService extends EventEmitter {
 
   async _handleDirectTrackSubmit(req, res, trackId) {
     const track = await SpotifyService.getTrackData(trackId);
-    if (!track.trackId) {
+    if (!track?.trackId) {
       res.json({ success: false, message: "Song not found" });
       console.log("Song not found");
       return;
