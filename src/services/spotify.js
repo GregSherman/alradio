@@ -1,4 +1,4 @@
-import DBService from "./db.js";
+import DBService from "./db/DatabaseService.js";
 import axios from "axios";
 import QueueService from "./queue.js";
 

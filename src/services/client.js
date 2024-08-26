@@ -1,6 +1,6 @@
 import SpotifyService from "./spotify.js";
 import QueueService from "./queue.js";
-import DBService from "./db.js";
+import DBService from "./db/DatabaseService.js";
 import SongController from "../controllers/songController.js";
 import EventEmitter from "events";
 

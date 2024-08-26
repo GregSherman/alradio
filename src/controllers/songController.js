@@ -3,7 +3,7 @@ import ClientService from "../services/client.js";
 import SpotifyService from "../services/spotify.js";
 import QueueService from "../services/queue.js";
 import OpenAIService from "../services/openai.js";
-import DBService from "../services/db.js";
+import DBService from "../services/db/DatabaseService.js";
 import ProxyService from "../services/proxy.js";
 
 import { EndableError } from "../errors.js";
