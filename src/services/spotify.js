@@ -1,6 +1,7 @@
-import DBService from "./db/DatabaseService.js";
 import axios from "axios";
 import QueueService from "./queue.js";
+import TrackService from "./db/TrackService.js";
+import HistoryService from "./db/HistoryService.js";
 
 class SpotifyService {
   constructor() {
@@ -149,14 +150,14 @@ class SpotifyService {
     const urlForPlatform = await this._getUrlForAllPlatforms(url);
 
     const cleanedTrackMetadata = this._extractMetadata(spotifyTrackMetadata);
-    const metadata = {
+    const trackData = {
       ...cleanedTrackMetadata,
       genres,
       urlForPlatform,
     };
 
-    DBService.saveSongMetadata(metadata);
-    return metadata;
+    TrackService.saveSongMetadata(trackData);
+    return trackData;
   }
 
   async getTrackData(trackId) {
@@ -182,7 +183,10 @@ class SpotifyService {
 
   async populateSuggestionQueue(numberOfSuggestions = 2) {
     // Get recommendations based on last five played
-    const lastFiveSongs = await DBService.getLastPlayedSongs(5);
+    const lastFiveSongs = await HistoryService.fetchMostRecentlyPlayedTracks(
+      1,
+      5,
+    );
     const lastFiveTrackIds = lastFiveSongs.map((track) => track.trackId);
 
     if (lastFiveTrackIds.length === 0) {
@@ -192,7 +196,7 @@ class SpotifyService {
     let suggestions = await this.getRecommendations(lastFiveTrackIds);
 
     // Do not suggest songs that have been played in the last two hours
-    const tooRecentlyPlayed = await DBService.getRecentlyPlayedSongs(2);
+    const tooRecentlyPlayed = await HistoryService.fetchRecentlyPlayedTracks(2);
     const tooRecentlyTrackIds = tooRecentlyPlayed.map((track) => track.trackId);
     suggestions = suggestions.filter(
       (track) => !tooRecentlyTrackIds.includes(track),

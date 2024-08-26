@@ -9,7 +9,6 @@ const TrackSchema = new mongoose.Schema({
   releaseDate: { type: Date },
   title: { type: String, required: true },
   trackId: { type: String, required: true, unique: true },
-  url: { type: String },
   urlForPlatform: { type: Map, of: String }, // e.g., { spotify: url, appleMusic: url }
 });
 

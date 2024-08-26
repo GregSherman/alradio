@@ -1,8 +1,8 @@
 import SpotifyService from "./spotify.js";
 import QueueService from "./queue.js";
-import DBService from "./db/DatabaseService.js";
 import SongController from "../controllers/songController.js";
 import EventEmitter from "events";
+import HistoryService from "./db/HistoryService.js";
 
 class ClientService extends EventEmitter {
   // eslint-disable-next-line constructor-super
@@ -75,7 +75,7 @@ class ClientService extends EventEmitter {
       return false;
     }
 
-    if (await DBService.hasSongBeenPlayedRecently(trackId)) {
+    if (await HistoryService.isTrackPlayedInLastHours(trackId)) {
       res.json({
         success: false,
         message: "Song has been played too recently.",
@@ -137,7 +137,7 @@ class ClientService extends EventEmitter {
   }
 
   async getSongHistory(req, res) {
-    const songHistory = await DBService.getLastPlayedSongs(16);
+    const songHistory = await HistoryService.fetchMostRecentlyPlayedTracks();
 
     // Do not send the current song in the history
     const currentTrackId = SongController.currentSongMetadata?.trackId;
