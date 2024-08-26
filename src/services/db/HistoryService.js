@@ -1,4 +1,5 @@
 import History from "../../models/History.js";
+import TrackService from "./TrackService.js";
 
 class HistoryService {
   async addPlayedTrack(trackId, userId = null) {
@@ -18,11 +19,19 @@ class HistoryService {
     const skip = (page - 1) * limit;
     const query = userSubmittedId ? { userSubmittedId } : {};
 
-    return History.find(query)
+    const history = await History.find(query)
       .sort({ datePlayed: -1 })
       .skip(skip)
       .limit(limit)
       .exec();
+
+    // for each trackId in history, get the track metadata
+    return Promise.all(
+      history.map(async (track) => {
+        const metadata = await TrackService.getSongMetadata(track.trackId);
+        return metadata;
+      }),
+    );
   }
 
   async isTrackPlayedInLastHours(trackId, hours = 3) {
