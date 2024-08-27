@@ -1,7 +1,7 @@
-import HistoryService from "./HistoryService.js";
+import HistoryModelService from "./HistoryModelService.js";
 import Track from "../../models/Track.js";
 
-class TrackService {
+class TrackModelService {
   async getSongMetadata(trackId) {
     return Track.findOne({ trackId }).lean().exec();
   }
@@ -14,8 +14,8 @@ class TrackService {
 
   async markSongAsPlayed(trackId, userId = null) {
     await Track.updateOne({ trackId }, { $inc: { playedCount: 1 } }).exec();
-    await HistoryService.addPlayedTrack(trackId, userId);
+    await HistoryModelService.addPlayedTrack(trackId, userId);
   }
 }
 
-export default new TrackService();
+export default new TrackModelService();

@@ -1,7 +1,7 @@
 import ClientService from "./ClientService.js";
 import SpotifyService from "../services/spotify.js";
 import QueueService from "../services/queue.js";
-import HistoryService from "../services/db/HistoryService.js";
+import HistoryModelService from "../services/db/HistoryModelService.js";
 import SongController from "../controllers/songController.js";
 
 class SongClient extends ClientService {
@@ -15,7 +15,8 @@ class SongClient extends ClientService {
 
   // Regular method
   async getSongHistory(req, res) {
-    const songHistory = await HistoryService.fetchMostRecentlyPlayedTracks();
+    const songHistory =
+      await HistoryModelService.fetchMostRecentlyPlayedTracks();
 
     // Do not send the current song in the history
     const currentTrackId = SongController.currentSongMetadata?.trackId;
@@ -70,7 +71,7 @@ class SongClient extends ClientService {
       return;
     }
 
-    if (await HistoryService.isTrackPlayedInLastHours(trackId)) {
+    if (await HistoryModelService.isTrackPlayedInLastHours(trackId)) {
       res.json({
         success: false,
         message: "Song has been played too recently.",

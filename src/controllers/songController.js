@@ -4,7 +4,7 @@ import StreamClient from "../client/StreamClient.js";
 import SpotifyService from "../services/spotify.js";
 import QueueService from "../services/queue.js";
 import OpenAIService from "../services/openai.js";
-import TrackService from "../services/db/TrackService.js";
+import TrackModelService from "../services/db/TrackModelService.js";
 import ProxyService from "../services/proxy.js";
 
 import { EndableError } from "../errors.js";
@@ -117,7 +117,7 @@ class SongController extends EventEmitter {
   async _markSongAsPlayed(metadata) {
     this.songPlaying = true;
     this.currentSongMetadata = metadata;
-    await TrackService.markSongAsPlayed(metadata.trackId);
+    await TrackModelService.markSongAsPlayed(metadata.trackId);
     console.log("Playing song", metadata.title, " - ", metadata.artist);
     new Promise((resolve) => {
       setTimeout(() => {
@@ -171,7 +171,7 @@ class SongController extends EventEmitter {
   async getTrackData(trackId) {
     // Fetch metadata from the database or Spotify API
     return (
-      (await TrackService.getSongMetadata(trackId)) ||
+      (await TrackModelService.getSongMetadata(trackId)) ||
       (await SpotifyService.getTrackData(trackId))
     );
   }

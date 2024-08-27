@@ -8,15 +8,19 @@ class ClientService extends EventEmitter {
     super();
   }
 
-  authenticate(req) {
+  authenticate(req, res) {
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) throw new Error("Unauthorized");
+    if (!token) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       return decoded.handle;
     } catch (err) {
-      throw new Error("Invalid Token");
+      res.status(401).json({ message: "Unauthorized" });
+      return;
     }
   }
 

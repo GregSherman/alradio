@@ -1,6 +1,7 @@
 import Account from "../../models/Account.js";
+import bcrypt from "bcrypt";
 
-class AccountService {
+class AccountModelService {
   // Get a user's public profile
   async getPublicUserProfile(handle) {
     return Account.findOne(
@@ -13,16 +14,23 @@ class AccountService {
         location: 1,
         ALThoughts: 1,
         friends: 1,
-        publiclyDisplay: 1,
       },
     )
       .lean()
       .exec();
   }
 
-  // get private profile
+  // Get private profile
   async getUserProfile(handle) {
-    return Account.findOne({ handle }).lean().exec();
+    return Account.findOne({ handle }, { passwordHash: 0 }).lean().exec();
+  }
+
+  async authorizeUser(handle, password) {
+    const user = await Account.findOne({ handle }).exec();
+    if (!user) {
+      return false;
+    }
+    return bcrypt.compare(password, user.passwordHash);
   }
 
   // Update a user's profile
@@ -82,4 +90,4 @@ class AccountService {
   }
 }
 
-export default new AccountService();
+export default new AccountModelService();

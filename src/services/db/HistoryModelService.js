@@ -1,7 +1,7 @@
 import History from "../../models/History.js";
-import TrackService from "./TrackService.js";
+import TrackModelService from "./TrackModelService.js";
 
-class HistoryService {
+class HistoryModelService {
   async addPlayedTrack(trackId, userId = null) {
     return History.create({ trackId, userId });
   }
@@ -28,7 +28,7 @@ class HistoryService {
     // for each trackId in history, get the track metadata
     return Promise.all(
       history.map(async (track) => {
-        const metadata = await TrackService.getSongMetadata(track.trackId);
+        const metadata = await TrackModelService.getSongMetadata(track.trackId);
         return metadata;
       }),
     );
@@ -40,4 +40,4 @@ class HistoryService {
   }
 }
 
-export default new HistoryService();
+export default new HistoryModelService();
