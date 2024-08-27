@@ -1,50 +1,45 @@
-import SpotifyService from "./spotify.js";
-import QueueService from "./queue.js";
+import ClientService from "./ClientService.js";
+import SpotifyService from "../services/spotify.js";
+import QueueService from "../services/queue.js";
+import HistoryService from "../services/db/HistoryService.js";
 import SongController from "../controllers/songController.js";
-import EventEmitter from "events";
-import HistoryService from "./db/HistoryService.js";
 
-class ClientService extends EventEmitter {
-  // eslint-disable-next-line constructor-super
-  constructor() {
-    super();
-    this._clients = new Set();
+class SongClient extends ClientService {
+  // Regular method
+  async getCurrentSongMetadata(req, res) {
+    const metadata = this._clientifyMetadata(
+      SongController.currentSongMetadata,
+    );
+    res.json(metadata);
   }
 
-  _clientifyMetadata(metadata) {
-    return {
-      trackId: metadata.trackId,
-      title: metadata.title,
-      artist: metadata.artist,
-      album: metadata.album,
-      urlForPlatform: metadata.urlForPlatform,
-      artUrl: metadata.artUrl,
-    };
+  // Regular method
+  async getSongHistory(req, res) {
+    const songHistory = await HistoryService.fetchMostRecentlyPlayedTracks();
+
+    // Do not send the current song in the history
+    const currentTrackId = SongController.currentSongMetadata?.trackId;
+    if (songHistory.length && songHistory[0].trackId === currentTrackId) {
+      songHistory.shift();
+    }
+
+    const clientifiedHistory = songHistory.map((song) =>
+      this._clientifyMetadata(song),
+    );
+    res.json(clientifiedHistory);
   }
 
-  hasActiveClients() {
-    return this._clients.size > 0;
+  // Regular method
+  async getNextSong(req, res) {
+    const nextSongMetadata = QueueService.getNextQueuedSongMetadata();
+    if (!nextSongMetadata) {
+      res.json({ success: false, message: "No songs in queue." });
+      return;
+    }
+    res.json(this._clientifyMetadata(nextSongMetadata));
   }
 
-  addClientToStream(req, res) {
-    res.writeHead(200, {
-      "Content-Type": "audio/mpeg",
-      Connection: "keep-alive",
-      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-      Pragma: "no-cache",
-      Expires: "0",
-      "Surrogate-Control": "no-store",
-    });
-
-    this._clients.add(res);
-    console.log("Client connected to stream");
-    this.emit("clientConnected");
-    res.on("close", () => {
-      this._clients.delete(res);
-      console.log("Client disconnected from stream");
-    });
-  }
-
+  // Regular method
   async _handleSearchQuerySubmit(req, res, query) {
     try {
       const track = await SpotifyService.searchTrack(query);
@@ -57,10 +52,10 @@ class ClientService extends EventEmitter {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Internal server error" });
-      return;
     }
   }
 
+  // Regular method
   async _handleDirectTrackSubmit(req, res, trackId) {
     const track = await SpotifyService.getTrackData(trackId);
     if (!track?.trackId) {
@@ -72,7 +67,7 @@ class ClientService extends EventEmitter {
     if (this._isTrackIdQueued(trackId)) {
       res.json({ success: false, message: "Song is already in the queue." });
       console.log("Song is already in the queue");
-      return false;
+      return;
     }
 
     if (await HistoryService.isTrackPlayedInLastHours(trackId)) {
@@ -81,13 +76,14 @@ class ClientService extends EventEmitter {
         message: "Song has been played too recently.",
       });
       console.log("Song has been played recently");
-      return false;
+      return;
     }
 
     await QueueService.addToUserQueue(trackId);
     res.json({ success: true, message: "Song added to queue." });
   }
 
+  // Regular method
   _isTrackIdQueued(trackId) {
     return (
       QueueService.userQueueHasTrack(trackId) ||
@@ -96,6 +92,7 @@ class ClientService extends EventEmitter {
     );
   }
 
+  // Regular method
   async submitSongRequest(req, res) {
     if (req.body.query.length > 256 || req.body.query.trim().length === 0) {
       res.json({ success: false, message: "Song not found" });
@@ -105,7 +102,7 @@ class ClientService extends EventEmitter {
     if (QueueService.isUserQueueFull()) {
       res.json({ success: false, message: "The queue is full." });
       console.log("User queue is full");
-      return false;
+      return;
     }
 
     const query = req.body.query;
@@ -128,41 +125,6 @@ class ClientService extends EventEmitter {
       return this._handleSearchQuerySubmit(req, res, query);
     }
   }
-
-  async getCurrentSongMetadata(req, res) {
-    const metadata = this._clientifyMetadata(
-      SongController.currentSongMetadata,
-    );
-    res.json(metadata);
-  }
-
-  async getSongHistory(req, res) {
-    const songHistory = await HistoryService.fetchMostRecentlyPlayedTracks();
-
-    // Do not send the current song in the history
-    const currentTrackId = SongController.currentSongMetadata?.trackId;
-    if (songHistory.length && songHistory[0].trackId === currentTrackId) {
-      songHistory.shift();
-    }
-    const clientifiedHistory = songHistory.map((song) =>
-      this._clientifyMetadata(song),
-    );
-    res.json(clientifiedHistory);
-  }
-
-  async getNextSong(req, res) {
-    const nextSongMetadata = QueueService.getNextQueuedSongMetadata();
-    if (!nextSongMetadata) {
-      res.json({ success: false, message: "No songs in queue." });
-      return;
-    }
-
-    res.json(this._clientifyMetadata(nextSongMetadata));
-  }
-
-  async getListeners(req, res) {
-    res.json(this._clients.size);
-  }
 }
 
-export default new ClientService();
+export default new SongClient();

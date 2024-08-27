@@ -1,5 +1,6 @@
 /* eslint-disable no-constant-condition */
-import ClientService from "../services/client.js";
+import ClientService from "../client/ClientService.js";
+import StreamClient from "../client/StreamClient.js";
 import SpotifyService from "../services/spotify.js";
 import QueueService from "../services/queue.js";
 import OpenAIService from "../services/openai.js";
@@ -28,7 +29,7 @@ class SongController extends EventEmitter {
   initialize() {
     // Event listeners for the song player
     QueueService.on("songQueued", () => this._player());
-    ClientService.on("clientConnected", () => this._player());
+    StreamClient.on("clientConnected", () => this._player());
     this.on("songEnded", () => this._player());
 
     // Event listeners for the song gatherer
