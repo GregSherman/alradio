@@ -7,13 +7,17 @@ class AccountModelService {
     return Account.findOne(
       { handle },
       {
-        handle: 1,
+        ALThoughts: 1,
         avatarUrl: 1,
         bio: 1,
+        createdDate: 1,
         favouriteSong: 1,
-        location: 1,
-        ALThoughts: 1,
         friends: 1,
+        handle: 1,
+        isOnline: 1,
+        lastOnline: 1,
+        location: 1,
+        numberOfSongsListened: 1,
       },
     )
       .lean()
@@ -62,22 +66,6 @@ class AccountModelService {
     return Account.updateOne(
       { handle },
       { $set: { customizationPreferences: preferences } },
-    ).exec();
-  }
-
-  // Add a friend to the user's friends list
-  async addFriend(handle, friendId) {
-    return Account.updateOne(
-      { handle },
-      { $push: { friends: { friendId, dateAdded: new Date() } } },
-    ).exec();
-  }
-
-  // Remove a friend from the user's friends list
-  async removeFriend(handle, friendId) {
-    return Account.updateOne(
-      { handle },
-      { $pull: { friends: { friendId } } },
     ).exec();
   }
 

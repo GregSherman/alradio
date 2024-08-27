@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import AccountModelService from "../services/db/AccountModelService.js";
+import HistoryModelService from "../services/db/HistoryModelService.js";
 import ClientService from "./ClientService.js";
 
 class AccountClient extends ClientService {
@@ -91,6 +92,44 @@ class AccountClient extends ClientService {
     }
 
     res.json({ message: "Profile updated successfully" });
+  }
+
+  async getHistory(req, res) {
+    const { handle } = req.params;
+    const page = req.query.page || 1;
+
+    const history = await HistoryModelService.fetchMostRecentlyPlayedTracks(
+      page,
+      10,
+      handle,
+    );
+    res.json(history);
+  }
+
+  async addFriend(req, res) {
+    const { handle } = req.params;
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (authHandle === handle) {
+      return res
+        .status(400)
+        .json({ message: "Cannot add yourself as a friend" });
+    }
+
+    const user = await AccountModelService.getPublicUserProfile(handle);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const result = await AccountModelService.addFriend(authHandle, handle);
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({ message: "Failed to add friend" });
+    }
+
+    res.json({ message: "Friend added successfully" });
   }
 }
 
