@@ -20,7 +20,7 @@ class StreamClient extends ClientService {
   }
 
   getListeners(req, res) {
-    res.json({ listeners: ClientService._clients.size });
+    res.json({ count: ClientService._clients.size });
   }
 }
 

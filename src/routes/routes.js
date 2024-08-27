@@ -22,11 +22,12 @@ router.post("/song/submit", (req, res) =>
 // Account Routes
 router.post("/register", (req, res) => AccountClient.register(req, res));
 router.post("/login", (req, res) => AccountClient.login(req, res));
-router.get("/accounts/:handle", (req, res) =>
-  AccountClient.getProfile(req, res),
+router.get("/accounts", (req, res) =>
+  AccountClient.getPrivateProfile(req, res),
 );
-router.post("/accounts/:handle", (req, res) =>
-  AccountClient.updateProfile(req, res),
+router.post("/accounts", (req, res) => AccountClient.updateProfile(req, res));
+router.get("/accounts/:handle", (req, res) =>
+  AccountClient.getPublicProfile(req, res),
 );
 router.get("/accounts/:handle/history", (req, res) =>
   AccountClient.getHistory(req, res),
