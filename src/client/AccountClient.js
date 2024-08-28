@@ -131,6 +131,9 @@ class AccountClient extends ClientService {
 
   async getPrivateProfile(req, res) {
     const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
 
     console.log("Fetching profile for handle:", authHandle);
 
