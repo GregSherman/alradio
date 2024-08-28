@@ -72,17 +72,20 @@ class SongController extends EventEmitter {
     }
 
     console.log("Gathering next song");
-    let nextTrackId = QueueService.popNextTrack();
-    if (!nextTrackId) {
+    let nextSuggestion = QueueService.popNextTrack();
+    console.log("Next suggestion:", nextSuggestion);
+    let { trackId, userSubmittedId } = nextSuggestion;
+    if (!trackId) {
       console.log("No more songs in queue. Populating suggestion queue.");
       await SpotifyService.populateSuggestionQueue();
-      nextTrackId = QueueService.popNextTrack();
+      ({ trackId, userSubmittedId } = QueueService.popNextTrack());
     }
 
-    this._setStateDownloading(nextTrackId);
+    this._setStateDownloading(trackId);
 
     try {
-      const trackMetadata = await this.getTrackData(nextTrackId);
+      const trackMetadata = await this.getTrackData(trackId);
+      trackMetadata.userSubmittedId = userSubmittedId;
       const concatenatedAudioPath = await this._gatherSongFiles(trackMetadata);
       QueueService.addToAudioQueue({
         path: concatenatedAudioPath,
@@ -94,7 +97,7 @@ class SongController extends EventEmitter {
         throw error;
       }
       console.error("Error getting next song:", error);
-      console.log("Skipping song:", nextTrackId);
+      console.log("Skipping song:", trackId);
     }
 
     this._setStateNotDownloading();
@@ -117,8 +120,18 @@ class SongController extends EventEmitter {
   async _markSongAsPlayed(metadata) {
     this.songPlaying = true;
     this.currentSongMetadata = metadata;
-    await TrackModelService.markSongAsPlayed(metadata.trackId);
-    console.log("Playing song", metadata.title, " - ", metadata.artist);
+    await TrackModelService.markSongAsPlayed(
+      metadata.trackId,
+      metadata.userSubmittedId,
+    );
+    console.log(
+      "Playing song",
+      metadata.title,
+      " - ",
+      metadata.artist,
+      "from",
+      metadata.userSubmittedId,
+    );
     new Promise((resolve) => {
       setTimeout(() => {
         this.emit("currentSongMetadataUpdated", metadata);

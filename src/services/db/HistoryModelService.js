@@ -2,8 +2,9 @@ import History from "../../models/History.js";
 import TrackModelService from "./TrackModelService.js";
 
 class HistoryModelService {
-  async addPlayedTrack(trackId, userId = null) {
-    return History.create({ trackId, userId });
+  async addPlayedTrack(trackId, userSubmittedId = null) {
+    console.log("Adding played track to history:", trackId, userSubmittedId);
+    return History.create({ trackId, userSubmittedId });
   }
 
   async fetchRecentlyPlayedTracks(hours) {
@@ -25,11 +26,10 @@ class HistoryModelService {
       .limit(limit)
       .exec();
 
-    // for each trackId in history, get the track metadata
     return Promise.all(
       history.map(async (track) => {
         const metadata = await TrackModelService.getSongMetadata(track.trackId);
-        return metadata;
+        return { ...metadata, ...track.toObject() };
       }),
     );
   }

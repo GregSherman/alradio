@@ -5,7 +5,6 @@ import HistoryModelService from "../services/db/HistoryModelService.js";
 import SongController from "../controllers/songController.js";
 
 class SongClient extends ClientService {
-  // Regular method
   async getCurrentSongMetadata(req, res) {
     const metadata = this._clientifyMetadata(
       SongController.currentSongMetadata,
@@ -13,7 +12,6 @@ class SongClient extends ClientService {
     res.json(metadata);
   }
 
-  // Regular method
   async getSongHistory(req, res) {
     const songHistory =
       await HistoryModelService.fetchMostRecentlyPlayedTracks();
@@ -57,7 +55,7 @@ class SongClient extends ClientService {
   }
 
   // Regular method
-  async _handleDirectTrackSubmit(req, res, trackId) {
+  async _handleDirectTrackSubmit(req, res, trackId, userSubmittedId) {
     const track = await SpotifyService.getTrackData(trackId);
     if (!track?.trackId) {
       res.json({ success: false, message: "Song not found" });
@@ -80,11 +78,10 @@ class SongClient extends ClientService {
       return;
     }
 
-    await QueueService.addToUserQueue(trackId);
+    QueueService.addToUserQueue(trackId, userSubmittedId);
     res.json({ success: true, message: "Song added to queue." });
   }
 
-  // Regular method
   _isTrackIdQueued(trackId) {
     return (
       QueueService.userQueueHasTrack(trackId) ||
@@ -93,8 +90,12 @@ class SongClient extends ClientService {
     );
   }
 
-  // Regular method
   async submitSongRequest(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
     if (req.body.query.length > 256 || req.body.query.trim().length === 0) {
       res.json({ success: false, message: "Song not found" });
       return;
@@ -121,7 +122,7 @@ class SongClient extends ClientService {
     }
 
     if (trackId) {
-      return this._handleDirectTrackSubmit(req, res, trackId);
+      return this._handleDirectTrackSubmit(req, res, trackId, authHandle);
     } else {
       return this._handleSearchQuerySubmit(req, res, query);
     }

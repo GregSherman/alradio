@@ -36,6 +36,9 @@ class ClientService extends EventEmitter {
       album: metadata.album,
       urlForPlatform: metadata.urlForPlatform,
       artUrl: metadata.artUrl,
+      userSubmittedId: metadata.userSubmittedId,
+      likes: metadata.likes,
+      datePlayed: metadata.datePlayed,
     };
   }
 }

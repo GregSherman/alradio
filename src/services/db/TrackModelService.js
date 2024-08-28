@@ -12,9 +12,9 @@ class TrackModelService {
     await Track.updateOne({ trackId }, trackData, { upsert: true }).exec();
   }
 
-  async markSongAsPlayed(trackId, userId = null) {
+  async markSongAsPlayed(trackId, userSubmittedId = null) {
     await Track.updateOne({ trackId }, { $inc: { playedCount: 1 } }).exec();
-    await HistoryModelService.addPlayedTrack(trackId, userId);
+    await HistoryModelService.addPlayedTrack(trackId, userSubmittedId);
   }
 }
 
