@@ -6,9 +6,11 @@ const AccountSchema = new mongoose.Schema({
   bio: { type: String, default: "" },
   createdDate: { type: Date, default: Date.now },
   customizationPreferences: { type: Map, of: String }, // e.g., { theme: "vaporTeal", windowPositions: {audioPlayer: {x: 50, y: 100}} }
+  email: { type: String, required: true, unique: true },
   favouriteSong: { type: String, default: "" },
   friends: [{ friendId: String, dateAdded: Date }],
   handle: { type: String, required: true, unique: true },
+  isEmailVerified: { type: Boolean, default: false },
   isOnline: { type: Boolean, default: false },
   lastOnline: { type: Date, default: Date.now },
   linkedServices: { type: Map, of: String }, // e.g., { spotify: url, appleMusic: url }

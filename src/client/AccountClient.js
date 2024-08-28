@@ -3,29 +3,96 @@ import jwt from "jsonwebtoken";
 import AccountModelService from "../services/db/AccountModelService.js";
 import HistoryModelService from "../services/db/HistoryModelService.js";
 import ClientService from "./ClientService.js";
+import leoProfanity from "leo-profanity";
+import emailValidator from "email-validator";
 
 class AccountClient extends ClientService {
   async register(req, res) {
-    const { handle, password, ...profileData } = req.body;
+    let { handle, password, email, ...profileData } = req.body;
     console.log("Attempting to register user with handle:", handle);
 
-    if (!handle || !password) {
-      console.log("Missing handle or password");
-      return res
-        .status(400)
-        .json({ message: "Handle and password are required" });
+    if (!handle) {
+      console.log("Handle is required");
+      return res.status(400).json({ message: "Handle is required" });
     }
 
-    const existingUser = await AccountModelService.getPublicUserProfile(handle);
-    if (existingUser) {
-      console.log("Handle already in use");
+    if (!password) {
+      console.log("Password is required");
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    if (!email) {
+      console.log("Email is required");
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    handle = handle.trim().toLowerCase();
+    email = email.trim().toLowerCase();
+
+    if (await AccountModelService.isEmailTaken(email)) {
+      console.log("Email already in use: ", email);
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    if (await AccountModelService.isHandleTaken(handle)) {
+      console.log("Handle already in use: ", handle);
       return res.status(400).json({ message: "Handle already in use" });
+    }
+
+    if (!/^[a-z0-9]{3,20}$/.test(handle)) {
+      console.log(
+        "Handle must be alphanumeric and between 3 and 20 characters: ",
+        handle,
+      );
+      return res.status(400).json({
+        message: "Handle must be alphanumeric and between 3 and 20 characters",
+      });
+    }
+
+    if (!emailValidator.validate(email)) {
+      console.log("Invalid email address: ", email);
+      return res.status(400).json({ message: "Invalid email address" });
+    }
+
+    leoProfanity.loadDictionary();
+    if (leoProfanity.check(handle)) {
+      console.log("Handle contains profanity:", handle);
+      return res.status(400).json({ message: "Handle contains profanity" });
+    }
+
+    if (password.length < 8) {
+      console.log("Password must be at least 8 characters long");
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 8 characters long" });
+    }
+
+    if (password.length > 256) {
+      console.log("Password must be at most 256 characters long");
+      return res
+        .status(400)
+        .json({ message: "Password must be at most 256 characters long" });
+    }
+
+    if (
+      !/[a-zA-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[!@#$%^&*]/.test(password)
+    ) {
+      console.log(
+        "Password must contain a letter, number, and special character",
+      );
+      return res.status(400).json({
+        message:
+          "Password must contain a letter, number, and special character",
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     await AccountModelService.addUserProfile({
       handle,
       passwordHash,
+      email,
       ...profileData,
     });
 
@@ -42,10 +109,8 @@ class AccountClient extends ClientService {
       password,
     );
     if (!passwordMatch) {
-      console.log("Incorrect username or password");
-      return res
-        .status(401)
-        .json({ message: "Incorrect username or password" });
+      console.log("Incorrect handle or password");
+      return res.status(401).json({ message: "Incorrect handle or password" });
     }
 
     const token = jwt.sign({ handle }, process.env.JWT_SECRET);

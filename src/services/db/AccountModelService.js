@@ -24,9 +24,19 @@ class AccountModelService {
       .exec();
   }
 
+  async isEmailTaken(email) {
+    return Account.exists({ email });
+  }
+
+  async isHandleTaken(handle) {
+    return Account.exists({ handle });
+  }
+
   // Get private profile
   async getUserProfile(handle) {
-    return Account.findOne({ handle }, { passwordHash: 0 }).lean().exec();
+    return Account.findOne({ handle }, { passwordHash: 0, _id: 0 })
+      .lean()
+      .exec();
   }
 
   async authorizeUser(handle, password) {
