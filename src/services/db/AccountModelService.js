@@ -18,6 +18,7 @@ class AccountModelService {
         lastOnline: 1,
         location: 1,
         numberOfSongsListened: 1,
+        role: 1,
       },
     )
       .lean()
@@ -30,6 +31,11 @@ class AccountModelService {
 
   async isHandleTaken(handle) {
     return Account.exists({ handle });
+  }
+
+  async isAdmin(handle) {
+    const user = await Account.findOne({ handle }, { role: 1 }).exec();
+    return user.role === "admin";
   }
 
   // Get private profile

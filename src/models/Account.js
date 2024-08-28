@@ -17,6 +17,7 @@ const AccountSchema = new mongoose.Schema({
   location: { type: String, default: "" },
   numberOfSongsListened: { type: Number, default: 0 },
   passwordHash: { type: String, required: true },
+  role: { type: String, default: "user" },
   serviceTokens: { type: Map, of: String }, // e.g., { spotify: token, appleMusic: token }
 });
 

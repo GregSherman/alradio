@@ -33,4 +33,27 @@ router.get("/accounts/:handle/history", (req, res) =>
   AccountClient.getHistory(req, res),
 );
 
+// Admin Routes
+router.get("/admin/queue/user", (req, res) =>
+  AccountClient.getUserQueue(req, res),
+);
+router.get("/admin/queue/audio", (req, res) =>
+  AccountClient.getAudioQueue(req, res),
+);
+router.get("/admin/queue/suggestion", (req, res) =>
+  AccountClient.getSuggestionQueue(req, res),
+);
+router.post("/admin/queue/user", (req, res) =>
+  AccountClient.editUserQueue(req, res),
+);
+router.post("/admin/queue/audio", (req, res) =>
+  AccountClient.editAudioQueue(req, res),
+);
+router.post("/admin/queue/suggestion", (req, res) =>
+  AccountClient.editSuggestionQueue(req, res),
+);
+router.post("/admin/skip", (req, res) =>
+  AccountClient.skipCurrentSong(req, res),
+);
+
 export default router;

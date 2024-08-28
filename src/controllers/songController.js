@@ -158,6 +158,9 @@ class SongController extends EventEmitter {
 
     throttle
       .on("data", (data) => {
+        this.on("forceStopSong", () => {
+          throttle.end();
+        });
         this._writeDataToClients(data);
       })
       .on("end", () => {
@@ -251,6 +254,10 @@ class SongController extends EventEmitter {
       this.currentSongMetadata?.trackId === trackId ||
       this.songDownloadingTrackId === trackId
     );
+  }
+
+  skipCurrentSong() {
+    this.emit("forceStopSong");
   }
 }
 

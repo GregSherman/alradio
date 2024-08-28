@@ -2,7 +2,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import AccountModelService from "../services/db/AccountModelService.js";
 import HistoryModelService from "../services/db/HistoryModelService.js";
+import QueueService from "../services/queue.js";
 import ClientService from "./ClientService.js";
+import SongController from "../controllers/songController.js";
 import leoProfanity from "leo-profanity";
 import emailValidator from "email-validator";
 
@@ -191,6 +193,117 @@ class AccountClient extends ClientService {
       handle,
     );
     res.json(history);
+  }
+
+  // admin only
+  // getSuggestionQueue
+  // getUserQueue
+  // editUserQueue
+  // editSuggestionQueue
+  // getAudioQueue
+  // editAudioQueue
+  // skipCurrentSong
+
+  async skipCurrentSong(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (!(await AccountModelService.isAdmin(authHandle))) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    console.log("ADMIN skipping current song");
+    SongController.skipCurrentSong();
+
+    res.json({ message: "Song skipped successfully" });
+  }
+
+  async getSuggestionQueue(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (!(await AccountModelService.isAdmin(authHandle))) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    console.log("ADMIN fetching suggestion queue");
+    res.json(QueueService.getSuggestionQueue());
+  }
+
+  async getUserQueue(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (!(await AccountModelService.isAdmin(authHandle))) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    console.log("ADMIN fetching user queue");
+    res.json(QueueService.getUserQueue());
+  }
+
+  async getAudioQueue(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (!(await AccountModelService.isAdmin(authHandle))) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    console.log("ADMIN fetching audio queue");
+    res.json(QueueService.getAudioQueue());
+  }
+
+  async editUserQueue(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (!(await AccountModelService.isAdmin(authHandle))) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    console.log("ADMIN editing user queue");
+    QueueService.editUserQueue(req.body);
+    res.json({ message: "User queue updated successfully" });
+  }
+
+  async editSuggestionQueue(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (!(await AccountModelService.isAdmin(authHandle))) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    console.log("ADMIN editing suggestion queue");
+    QueueService.editSuggestionQueue(req.body);
+    res.json({ message: "Suggestion queue updated successfully" });
+  }
+
+  async editAudioQueue(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    if (!(await AccountModelService.isAdmin(authHandle))) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    console.log("ADMIN editing audio queue");
+    QueueService.editAudioQueue(req.body);
+    res.json({ message: "Audio queue updated successfully" });
   }
 }
 

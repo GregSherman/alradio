@@ -89,6 +89,30 @@ class QueueService extends EventEmitter {
       (audioFile) => audioFile.metadata.trackId === trackId,
     );
   }
+
+  getSuggestionQueue() {
+    return this._suggestionQueue;
+  }
+
+  getUserQueue() {
+    return this._userQueue;
+  }
+
+  getAudioQueue() {
+    return this._audioQueue;
+  }
+
+  editUserQueue(newQueue) {
+    this._userQueue = newQueue;
+  }
+
+  editSuggestionQueue(newQueue) {
+    this._suggestionQueue = newQueue;
+  }
+
+  editAudioQueue(newQueue) {
+    this._audioQueue = newQueue;
+  }
 }
 
 export default new QueueService();
