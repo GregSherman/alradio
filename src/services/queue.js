@@ -4,9 +4,7 @@ class QueueService extends EventEmitter {
   constructor() {
     super();
     // Format: [{trackId: "trackId1", userSubmittedId: "userSubmittedId"}, ...]
-    this._userQueue = [
-      { trackId: "7hPLPHeKbwJrsuDHv4BCTA", userSubmittedId: "greg" },
-    ];
+    this._userQueue = [];
     // Format: [{trackId: "trackId1", userSubmittedId: null}, ...]
     this._suggestionQueue = [];
     // Format: [{path: "path/to/audio/file", metadata: {trackid: '...', userSubmittedId: 'greg'}}, ...]
