@@ -127,7 +127,6 @@ class AccountClient extends ClientService {
       console.log("Profile not found");
       return res.status(404).json({ message: "Profile not found" });
     }
-    console.log("Returning public profile for handle:", handle);
     res.json(profile);
   }
 
@@ -137,15 +136,12 @@ class AccountClient extends ClientService {
       return;
     }
 
-    console.log("Fetching profile for handle:", authHandle);
-
     const profile = await AccountModelService.getUserProfile(authHandle);
     if (!profile) {
       console.log("Profile not found");
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    console.log("Returning profile for handle:", authHandle);
     res.json(profile);
   }
 
@@ -153,8 +149,6 @@ class AccountClient extends ClientService {
     const authHandle = this.authenticate(req, res);
     const { handle } = req.params;
     const updateData = req.body;
-
-    console.log("Updating profile for handle:", handle);
 
     if (authHandle !== handle) {
       console.log("Cannot update another user's profile");
@@ -185,8 +179,6 @@ class AccountClient extends ClientService {
     const { handle } = req.params;
     const page = req.query.page || 1;
 
-    console.log("Fetching history for handle:", handle);
-
     const history = await HistoryModelService.fetchMostRecentlyPlayedTracks(
       page,
       10,
@@ -196,14 +188,6 @@ class AccountClient extends ClientService {
   }
 
   // admin only
-  // getSuggestionQueue
-  // getUserQueue
-  // editUserQueue
-  // editSuggestionQueue
-  // getAudioQueue
-  // editAudioQueue
-  // skipCurrentSong
-
   async skipCurrentSong(req, res) {
     const authHandle = this.authenticate(req, res);
     if (!authHandle) {
