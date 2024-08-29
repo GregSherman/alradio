@@ -156,20 +156,24 @@ class SongController extends EventEmitter {
     const readable = fs.createReadStream(path);
     const throttle = new Throttle(Math.floor(bitrate / 8));
 
+    const handleForceStop = () => {
+      throttle.end();
+    };
+    this.on("forceStopSong", handleForceStop);
+
     throttle
       .on("data", (data) => {
-        this.on("forceStopSong", () => {
-          throttle.end();
-        });
         this._writeDataToClients(data);
       })
       .on("end", () => {
+        this.removeListener("forceStopSong", handleForceStop);
         this.songPlaying = false;
         console.log("Song ended");
         this.emit("songEnded");
         readable.close();
         fs.unlinkSync(path);
       });
+
     readable.pipe(throttle);
   }
 

@@ -103,7 +103,8 @@ class AccountClient extends ClientService {
   }
 
   async login(req, res) {
-    const { handle, password } = req.body;
+    let { handle, password } = req.body;
+    handle = handle.trim().toLowerCase();
     console.log("Attempting to login user with handle:", handle);
 
     const passwordMatch = await AccountModelService.authorizeUser(
@@ -121,7 +122,8 @@ class AccountClient extends ClientService {
   }
 
   async getPublicProfile(req, res) {
-    const { handle } = req.params;
+    let { handle } = req.params;
+    handle = handle.trim().toLowerCase();
     const profile = await AccountModelService.getPublicUserProfile(handle);
     if (!profile) {
       console.log("Profile not found");
@@ -147,7 +149,8 @@ class AccountClient extends ClientService {
 
   async updateProfile(req, res) {
     const authHandle = this.authenticate(req, res);
-    const { handle } = req.params;
+    let { handle } = req.params;
+    handle = handle.trim().toLowerCase();
     const updateData = req.body;
 
     if (authHandle !== handle) {
@@ -176,7 +179,8 @@ class AccountClient extends ClientService {
   }
 
   async getHistory(req, res) {
-    const { handle } = req.params;
+    let { handle } = req.params;
+    handle = handle.trim().toLowerCase();
     const page = req.query.page || 1;
 
     const history = await HistoryModelService.fetchMostRecentlyPlayedTracks(
