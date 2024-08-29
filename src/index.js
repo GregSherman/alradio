@@ -1,10 +1,13 @@
 import express from "express";
+import cors from "cors";
+
 import songRoutes from "./routes/routes.js";
+
 import SpotifyService from "./services/spotify.js";
 import ProxyService from "./services/proxy.js";
 import QueueService from "./services/queue.js";
 import SongController from "./controllers/songController.js";
-import cors from "cors";
+import DatabaseService from "./services/db/DatabaseService.js";
 
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || "*",
@@ -44,6 +47,7 @@ app.listen(PORT, async () => {
     );
   }
 
+  await DatabaseService.initialize();
   await SpotifyService.initialize();
   SongController.initialize();
 });

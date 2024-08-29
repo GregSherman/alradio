@@ -1,9 +1,10 @@
 /* eslint-disable no-constant-condition */
-import ClientService from "../services/client.js";
+import ClientService from "../client/ClientService.js";
+import StreamClient from "../client/StreamClient.js";
 import SpotifyService from "../services/spotify.js";
 import QueueService from "../services/queue.js";
 import OpenAIService from "../services/openai.js";
-import DBService from "../services/db.js";
+import TrackModelService from "../services/db/TrackModelService.js";
 import ProxyService from "../services/proxy.js";
 
 import { EndableError } from "../errors.js";
@@ -28,7 +29,7 @@ class SongController extends EventEmitter {
   initialize() {
     // Event listeners for the song player
     QueueService.on("songQueued", () => this._player());
-    ClientService.on("clientConnected", () => this._player());
+    StreamClient.on("clientConnected", () => this._player());
     this.on("songEnded", () => this._player());
 
     // Event listeners for the song gatherer
@@ -71,17 +72,20 @@ class SongController extends EventEmitter {
     }
 
     console.log("Gathering next song");
-    let nextTrackId = QueueService.popNextTrack();
-    if (!nextTrackId) {
+    let nextSuggestion = QueueService.popNextTrack();
+    console.log("Next suggestion:", nextSuggestion);
+    let { trackId, userSubmittedId } = nextSuggestion;
+    if (!trackId) {
       console.log("No more songs in queue. Populating suggestion queue.");
       await SpotifyService.populateSuggestionQueue();
-      nextTrackId = QueueService.popNextTrack();
+      ({ trackId, userSubmittedId } = QueueService.popNextTrack());
     }
 
-    this._setStateDownloading(nextTrackId);
+    this._setStateDownloading(trackId);
 
     try {
-      const trackMetadata = await this.getTrackData(nextTrackId);
+      const trackMetadata = await this.getTrackData(trackId);
+      trackMetadata.userSubmittedId = userSubmittedId;
       const concatenatedAudioPath = await this._gatherSongFiles(trackMetadata);
       QueueService.addToAudioQueue({
         path: concatenatedAudioPath,
@@ -93,7 +97,7 @@ class SongController extends EventEmitter {
         throw error;
       }
       console.error("Error getting next song:", error);
-      console.log("Skipping song:", nextTrackId);
+      console.log("Skipping song:", trackId);
     }
 
     this._setStateNotDownloading();
@@ -116,8 +120,18 @@ class SongController extends EventEmitter {
   async _markSongAsPlayed(metadata) {
     this.songPlaying = true;
     this.currentSongMetadata = metadata;
-    await DBService.markSongAsPlayed(metadata.trackId);
-    console.log("Playing song", metadata.title, " - ", metadata.artist);
+    await TrackModelService.markSongAsPlayed(
+      metadata.trackId,
+      metadata.userSubmittedId,
+    );
+    console.log(
+      "Playing song",
+      metadata.title,
+      " - ",
+      metadata.artist,
+      "from",
+      metadata.userSubmittedId,
+    );
     new Promise((resolve) => {
       setTimeout(() => {
         this.emit("currentSongMetadataUpdated", metadata);
@@ -144,6 +158,9 @@ class SongController extends EventEmitter {
 
     throttle
       .on("data", (data) => {
+        this.on("forceStopSong", () => {
+          throttle.end();
+        });
         this._writeDataToClients(data);
       })
       .on("end", () => {
@@ -170,7 +187,7 @@ class SongController extends EventEmitter {
   async getTrackData(trackId) {
     // Fetch metadata from the database or Spotify API
     return (
-      (await DBService.getSongMetadata(trackId)) ||
+      (await TrackModelService.getSongMetadata(trackId)) ||
       (await SpotifyService.getTrackData(trackId))
     );
   }
@@ -237,6 +254,10 @@ class SongController extends EventEmitter {
       this.currentSongMetadata?.trackId === trackId ||
       this.songDownloadingTrackId === trackId
     );
+  }
+
+  skipCurrentSong() {
+    this.emit("forceStopSong");
   }
 }
 

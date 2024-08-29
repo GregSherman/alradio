@@ -14,13 +14,13 @@ class OpenAiService {
     If there's a previous song, provide a transition between the two. Either,
     a quick one, or a more detailed one contrasting them or connecting them.
 
-    Important: Ensure each introduction is only a few sentences long.
-
-    Important: Be conversational. You're talking to a listener, not reading a script.
+    Important Requirements:
+    1. Ensure each introduction is only a few sentences long.
+    2. Be conversational. You're talking to a listener, not reading a script.
     This includes using modern slang, contractions, making mistakes, and being casual.
-
-    Important: Do not say "shift gears", "spoiler", "let's dive in", "without further ado",
+    3. Do not say "shift gears", "spoiler", "let's dive in", "without further ado",
     "let's get started", "let's jump right in", or anything similar to these.
+    4. Ensure you state who the songs were suggested by. If there is none, do not mention it.
     `;
   }
 
@@ -54,7 +54,8 @@ class OpenAiService {
     - Artist: ${thisSongMetadata.artist}
     - Album: ${thisSongMetadata.album}
     - Genres: ${thisSongMetadata.genres.join(", ")}
-    - Release date: ${thisSongMetadata.releaseDate}`;
+    - Release date: ${thisSongMetadata.releaseDate}
+    - Suggested by: ${thisSongMetadata.userSubmittedId}`;
 
     const previousSongPrompt = previousSongMetadata.title
       ? `
@@ -63,7 +64,8 @@ class OpenAiService {
     - Artist: ${previousSongMetadata.artist}
     - Album: ${previousSongMetadata.album}
     - Genres: ${previousSongMetadata.genres.join(", ")}
-    - Release date: ${previousSongMetadata.releaseDate}`
+    - Release date: ${previousSongMetadata.releaseDate}
+    - Suggested by: ${previousSongMetadata.userSubmittedId}`
       : "";
 
     return `${currentSongPrompt}\n\n${previousSongPrompt}`;

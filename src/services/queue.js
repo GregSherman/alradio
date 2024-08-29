@@ -3,24 +3,24 @@ import { EventEmitter } from "events";
 class QueueService extends EventEmitter {
   constructor() {
     super();
-    // Format: ["trackId1", "trackId2", ...]
+    // Format: [{trackId: "trackId1", userSubmittedId: "userSubmittedId"}, ...]
     this._userQueue = [];
-    // Format: ["trackId1", "trackId2", ...]
+    // Format: [{trackId: "trackId1", userSubmittedId: null}, ...]
     this._suggestionQueue = [];
-    // Format: [{path: "path/to/audio/file", metadata: {}}]
+    // Format: [{path: "path/to/audio/file", metadata: {trackid: '...', userSubmittedId: 'greg'}}, ...]
     this._audioQueue = [];
     this._numSongsToPreload = 2;
   }
 
-  async addToUserQueue(trackId) {
-    this._userQueue.push(trackId);
+  addToUserQueue(trackId, userSubmittedId) {
+    this._userQueue.push({ trackId, userSubmittedId });
     this._suggestionQueue = [];
     console.log("Added trackId", trackId, "to user queue");
   }
 
   addToSuggestionQueue(trackId) {
     if (this._suggestionQueue.length < 5) {
-      this._suggestionQueue.push(trackId);
+      this._suggestionQueue.push({ trackId, userSubmittedId: null });
       console.log("Added trackId", trackId, "to suggestion queue");
       return true;
     }
@@ -28,9 +28,13 @@ class QueueService extends EventEmitter {
   }
 
   popNextTrack() {
-    return this._userQueue.length
-      ? this._userQueue.shift()
-      : this._suggestionQueue.shift();
+    if (this._userQueue.length === 0) {
+      if (this._suggestionQueue.length === 0) {
+        return {};
+      }
+      return this._suggestionQueue.shift();
+    }
+    return this._userQueue.shift();
   }
 
   addToAudioQueue(audioFile) {
@@ -82,6 +86,30 @@ class QueueService extends EventEmitter {
     return this._audioQueue.some(
       (audioFile) => audioFile.metadata.trackId === trackId,
     );
+  }
+
+  getSuggestionQueue() {
+    return this._suggestionQueue;
+  }
+
+  getUserQueue() {
+    return this._userQueue;
+  }
+
+  getAudioQueue() {
+    return this._audioQueue;
+  }
+
+  editUserQueue(newQueue) {
+    this._userQueue = newQueue;
+  }
+
+  editSuggestionQueue(newQueue) {
+    this._suggestionQueue = newQueue;
+  }
+
+  editAudioQueue(newQueue) {
+    this._audioQueue = newQueue;
   }
 }
 
