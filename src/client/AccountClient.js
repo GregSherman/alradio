@@ -191,6 +191,21 @@ class AccountClient extends ClientService {
     res.json(history);
   }
 
+  async getHandleAndPictureFromToken(req, res) {
+    const authHandle = this.authenticate(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    const profile = await AccountModelService.getUserProfile(authHandle);
+    if (!profile) {
+      console.log("Profile not found");
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    res.json({ handle: profile.handle, avatarUrl: profile.avatarUrl });
+  }
+
   // admin only
   async skipCurrentSong(req, res) {
     const authHandle = this.authenticate(req, res);

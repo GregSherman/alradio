@@ -22,6 +22,9 @@ router.post("/song/submit", (req, res) =>
 // Account Routes
 router.post("/register", (req, res) => AccountClient.register(req, res));
 router.post("/login", (req, res) => AccountClient.login(req, res));
+router.get("/handle", (req, res) =>
+  AccountClient.getHandleAndPictureFromToken(req, res),
+);
 router.get("/accounts", (req, res) =>
   AccountClient.getPrivateProfile(req, res),
 );
