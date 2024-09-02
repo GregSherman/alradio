@@ -199,7 +199,7 @@ class SongController extends EventEmitter {
   async _gatherSongFiles(trackMetadata) {
     // Download the track and generate an intro speech. Skip song if either fails
     const audioFilePath = await this._downloadTrack(
-      trackMetadata.urlForPlatform.spotify,
+      trackMetadata.urlForPlatform.youtube,
     );
     const announcementText = await OpenAIService.generateSongIntro(
       trackMetadata,
@@ -217,36 +217,33 @@ class SongController extends EventEmitter {
   }
 
   async _downloadTrack(url) {
-    const command = `spotdl download ${url} --output="./audio/{track-id}"`;
+    const fileName = new Date().getTime();
+    const filePath = `./audio/${fileName}.mp3`;
+    const command = `yt-dlp -x -f 'bestaudio' --output ${filePath} ${url} --audio-format mp3`;
     const execAsync = promisify(exec);
 
-    for (let failCount = 1; failCount <= 5; failCount++) {
+    for (let failCount = 1; failCount <= 10; failCount++) {
       try {
         await ProxyService.setProxy();
         console.log("Downloading track from:", url);
-        await execAsync(command, { timeout: 60000 });
-
-        const fileName = url.split("/track/")[1].split("?")[0];
-        const filePath = `./audio/${fileName}.mp3`;
+        await execAsync(command, { timeout: 30000 });
 
         if (fs.existsSync(filePath)) {
-          console.log("Downloaded track:", fileName);
+          console.log("Downloaded track!");
           return filePath;
         }
-
-        // File not found, mark proxy as bad and retry
-        ProxyService.markActiveProxyBad();
-        console.error(
-          "Failed to download track:",
-          fileName,
-          "Retry:",
-          failCount,
-        );
       } catch (error) {
         console.error("Error downloading track:", error);
-        ProxyService.markActiveProxyBad();
-        console.error("Retrying download, attempt:", failCount);
       }
+
+      // Failed, remove files and try again
+      ProxyService.markActiveProxyBad();
+      console.error("Failed to download track:", url, "Retry:", failCount);
+      fs.readdirSync("./audio").forEach((file) => {
+        if (file.includes(fileName)) {
+          fs.unlinkSync(`./audio/${file}`);
+        }
+      });
     }
     throw new Error(
       "Failed to download track after 10 attempts. Skipping song.",

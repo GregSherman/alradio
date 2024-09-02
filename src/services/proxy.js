@@ -12,7 +12,7 @@ class ProxyService {
     if (!this._apiUrl) return;
     try {
       const response = await axios.get(this._apiUrl);
-      let proxyList = response.data.split("\r\n");
+      let proxyList = response.data.split("\n");
       this._proxyList.pop();
       this._proxyList = proxyList.map((proxy) => this._parseProxy(proxy));
     } catch (error) {
@@ -44,6 +44,21 @@ class ProxyService {
     this._activeProxy = {};
   }
 
+  async _testProxy(proxy) {
+    console.log("Testing proxy:", proxy.host, proxy.port);
+    try {
+      await axios.get("http://httpbin.org/ip", {
+        proxy: { host: proxy.host, port: proxy.port },
+      });
+      console.log("Proxy test successful.");
+      return true;
+    } catch (error) {
+      console.error("Failed proxy test:", error.message);
+      this._markProxyBad(proxy);
+      return false;
+    }
+  }
+
   // Go through the proxy list and find a working proxy.
   // If no working proxies are found, refresh the list and try again.
   // If still no proxies are found, throw an error to end the program.
@@ -58,8 +73,11 @@ class ProxyService {
     while (failedAttempts < max) {
       const randomIndex = Math.floor(Math.random() * this._proxyList.length);
       const randomProxy = this._proxyList[randomIndex];
-      this._activeProxy = randomProxy;
-      return randomProxy;
+
+      if (await this._testProxy(randomProxy)) {
+        this._activeProxy = randomProxy;
+        return randomProxy;
+      }
     }
 
     if (raise) {

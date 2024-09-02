@@ -123,7 +123,6 @@ class AccountClient extends ClientService {
 
   async getPublicProfile(req, res) {
     let { handle } = req.params;
-    handle = handle.trim().toLowerCase();
     const profile = await AccountModelService.getPublicUserProfile(handle);
     if (!profile) {
       console.log("Profile not found");

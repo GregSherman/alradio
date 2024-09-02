@@ -131,7 +131,7 @@ class OpenAiService {
       fs.writeFileSync(tempAudioPath, response.data);
 
       try {
-        const command = `ffmpeg -i "${tempAudioPath}" -filter:a "volume=2.3" "${audioPath}"`;
+        const command = `ffmpeg -i "${tempAudioPath}" -filter:a "volume=3.0" "${audioPath}"`;
         const execAsync = promisify(exec);
         await execAsync(command);
       } catch (error) {
