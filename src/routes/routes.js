@@ -8,6 +8,7 @@ const router = Router();
 // Stream Routes
 router.get("/stream", (req, res) => StreamClient.addClientToStream(req, res));
 router.get("/listeners", (req, res) => StreamClient.getListeners(req, res));
+router.get("/tuneout", (req, res) => StreamClient.tuneOut(req, res));
 
 // Song Routes
 router.get("/song/current", (req, res) =>
