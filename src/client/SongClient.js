@@ -3,6 +3,8 @@ import SpotifyService from "../services/spotify.js";
 import QueueService from "../services/queue.js";
 import HistoryModelService from "../services/db/HistoryModelService.js";
 import SongController from "../controllers/songController.js";
+import RequestModelService from "../services/db/RequestModelService.js";
+import AccountModelService from "../services/db/AccountModelService.js";
 
 class SongClient extends ClientService {
   async getCurrentSongMetadata(req, res) {
@@ -90,6 +92,21 @@ class SongClient extends ClientService {
   async submitSongRequest(req, res) {
     const authHandle = this.authenticate(req, res);
     if (!authHandle) {
+      return;
+    }
+
+    if (
+      !(await AccountModelService.userHasPermission(
+        authHandle,
+        "noRateLimit",
+      )) &&
+      (await RequestModelService.isUserRateLimited(authHandle))
+    ) {
+      res.json({
+        success: false,
+        message: "Maximum requests reached. Try again later.",
+      });
+      console.log("User is rate limited");
       return;
     }
 

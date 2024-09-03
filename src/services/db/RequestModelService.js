@@ -86,6 +86,17 @@ class RequestModelService {
     await Request.deleteMany({ playStatus: { $in: ["requested", "pending"] } });
     await Request.insertMany(newQueue);
   }
+
+  async isUserRateLimited(userSubmittedId) {
+    // check if they have submitted 3 requests in the last hour
+    const cutoff = new Date(Date.now() - 3600 * 1000);
+    return (
+      (await Request.countDocuments({
+        userSubmittedId,
+        dateRequested: { $gte: cutoff },
+      })) >= 3
+    );
+  }
 }
 
 export default new RequestModelService();

@@ -1,6 +1,10 @@
 import Account from "../../models/Account.js";
 import bcrypt from "bcrypt";
 
+const PERMISSION_MAP = {
+  noRateLimit: ["admin"],
+};
+
 class AccountModelService {
   // Get a user's public profile
   async getPublicUserProfile(handle) {
@@ -91,6 +95,11 @@ class AccountModelService {
       { handle },
       { $inc: { numberOfSongsListened: 1 } },
     ).exec();
+  }
+
+  async userHasPermission(handle, permission) {
+    const user = await Account.findOne({ handle }, { role: 1 }).exec();
+    return PERMISSION_MAP[permission].includes(user.role);
   }
 }
 
