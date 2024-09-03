@@ -143,6 +143,14 @@ class SpotifyService {
   }
 
   async _convertAndSaveSpotifyTrackMetadata(spotifyTrackMetadata) {
+    const existingTrack = await TrackModelService.getSongMetadata(
+      spotifyTrackMetadata.id,
+    );
+
+    if (existingTrack) {
+      return existingTrack;
+    }
+
     const artistId = spotifyTrackMetadata.artists[0].id;
     const url = spotifyTrackMetadata.external_urls.spotify;
 

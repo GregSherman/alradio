@@ -1,40 +1,37 @@
 import { EventEmitter } from "events";
-
+import RequestModelService from "./db/RequestModelService.js";
 class QueueService extends EventEmitter {
   constructor() {
     super();
-    // Format: [{trackId: "trackId1", userSubmittedId: "userSubmittedId"}, ...]
-    this._userQueue = [];
     // Format: [{trackId: "trackId1", userSubmittedId: null}, ...]
-    this._suggestionQueue = [];
+    this._autoSuggestionQueue = [];
     // Format: [{path: "path/to/audio/file", metadata: {trackid: '...', userSubmittedId: 'greg'}}, ...]
     this._audioQueue = [];
     this._numSongsToPreload = 2;
   }
 
-  addToUserQueue(trackId, userSubmittedId) {
-    this._userQueue.push({ trackId, userSubmittedId });
-    this._suggestionQueue = [];
-    console.log("Added trackId", trackId, "to user queue");
+  async addToUserQueue(trackId, userSubmittedId) {
+    await RequestModelService.addRequest(trackId, userSubmittedId);
+    this._autoSuggestionQueue = [];
   }
 
   addToSuggestionQueue(trackId) {
-    if (this._suggestionQueue.length < 5) {
-      this._suggestionQueue.push({ trackId, userSubmittedId: null });
+    if (this._autoSuggestionQueue.length < 5) {
+      this._autoSuggestionQueue.push({ trackId, userSubmittedId: null });
       console.log("Added trackId", trackId, "to suggestion queue");
       return true;
     }
     return false;
   }
 
-  popNextTrack() {
-    if (this._userQueue.length === 0) {
-      if (this._suggestionQueue.length === 0) {
+  async popNextTrack() {
+    if (!(await RequestModelService.hasRequestedTracks())) {
+      if (this._autoSuggestionQueue.length === 0) {
         return {};
       }
-      return this._suggestionQueue.shift();
+      return this._autoSuggestionQueue.shift();
     }
-    return this._userQueue.shift();
+    return RequestModelService.getNextUserRequest();
   }
 
   addToAudioQueue(audioFile) {
@@ -74,12 +71,12 @@ class QueueService extends EventEmitter {
     return this._audioQueue[0]?.metadata;
   }
 
-  isUserQueueFull() {
-    return this._userQueue.length >= 100;
+  async isUserQueueFull() {
+    return RequestModelService.isQueueFull();
   }
 
-  userQueueHasTrack(trackId) {
-    return this._userQueue.includes(trackId);
+  async userQueueHasTrack(trackId) {
+    return RequestModelService.isTrackRequested(trackId);
   }
 
   audioQueueHasTrack(trackId) {
@@ -89,23 +86,23 @@ class QueueService extends EventEmitter {
   }
 
   getSuggestionQueue() {
-    return this._suggestionQueue;
+    return this._autoSuggestionQueue;
   }
 
-  getUserQueue() {
-    return this._userQueue;
+  async getUserQueue() {
+    return RequestModelService.fetchLastRequestedTracks();
   }
 
   getAudioQueue() {
     return this._audioQueue;
   }
 
-  editUserQueue(newQueue) {
-    this._userQueue = newQueue;
+  async editUserQueue(newQueue) {
+    await RequestModelService.updateRequestQueue(newQueue);
   }
 
   editSuggestionQueue(newQueue) {
-    this._suggestionQueue = newQueue;
+    this._autoSuggestionQueue = newQueue;
   }
 
   editAudioQueue(newQueue) {

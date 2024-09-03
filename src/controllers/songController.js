@@ -72,13 +72,14 @@ class SongController extends EventEmitter {
     }
 
     console.log("Gathering next song");
-    let nextSuggestion = QueueService.popNextTrack();
-    console.log("Next suggestion:", nextSuggestion);
-    let { trackId, userSubmittedId } = nextSuggestion;
+    let { trackId, userSubmittedId, requestId } =
+      await QueueService.popNextTrack();
+    console.log("Next song in queue:", trackId, userSubmittedId, requestId);
     if (!trackId) {
       console.log("No more songs in queue. Populating suggestion queue.");
       await SpotifyService.populateSuggestionQueue();
-      ({ trackId, userSubmittedId } = QueueService.popNextTrack());
+      ({ trackId, userSubmittedId, requestId } =
+        await QueueService.popNextTrack());
     }
 
     this._setStateDownloading(trackId);
@@ -86,6 +87,8 @@ class SongController extends EventEmitter {
     try {
       const trackMetadata = await this.getTrackData(trackId);
       trackMetadata.userSubmittedId = userSubmittedId;
+      trackMetadata.requestId = requestId;
+
       const concatenatedAudioPath = await this._gatherSongFiles(trackMetadata);
       QueueService.addToAudioQueue({
         path: concatenatedAudioPath,
@@ -123,6 +126,7 @@ class SongController extends EventEmitter {
     await TrackModelService.markSongAsPlayed(
       metadata.trackId,
       metadata.userSubmittedId,
+      metadata.requestId,
     );
     console.log(
       "Playing song",

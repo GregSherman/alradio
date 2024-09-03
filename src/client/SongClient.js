@@ -28,7 +28,6 @@ class SongClient extends ClientService {
     res.json(clientifiedHistory);
   }
 
-  // Regular method
   async getNextSong(req, res) {
     const nextSongMetadata = QueueService.getNextQueuedSongMetadata();
     if (!nextSongMetadata) {
@@ -38,7 +37,6 @@ class SongClient extends ClientService {
     res.json(this._clientifyMetadata(nextSongMetadata));
   }
 
-  // Regular method
   async _handleSearchQuerySubmit(req, res, query) {
     try {
       const track = await SpotifyService.searchTrack(query);
@@ -54,7 +52,6 @@ class SongClient extends ClientService {
     }
   }
 
-  // Regular method
   async _handleDirectTrackSubmit(req, res, trackId, userSubmittedId) {
     const track = await SpotifyService.getTrackData(trackId);
     if (!track?.trackId) {
@@ -63,7 +60,7 @@ class SongClient extends ClientService {
       return;
     }
 
-    if (this._isTrackIdQueued(trackId)) {
+    if (await this._isTrackIdQueued(trackId)) {
       res.json({ success: false, message: "Song is already in the queue." });
       console.log("Song is already in the queue");
       return;
@@ -78,13 +75,13 @@ class SongClient extends ClientService {
       return;
     }
 
-    QueueService.addToUserQueue(trackId, userSubmittedId);
+    await QueueService.addToUserQueue(trackId, userSubmittedId);
     res.json({ success: true, message: "Song added to queue." });
   }
 
-  _isTrackIdQueued(trackId) {
+  async _isTrackIdQueued(trackId) {
     return (
-      QueueService.userQueueHasTrack(trackId) ||
+      (await QueueService.userQueueHasTrack(trackId)) ||
       QueueService.audioQueueHasTrack(trackId) ||
       SongController.isTrackIdPlayingOrDownloading(trackId)
     );
@@ -101,7 +98,7 @@ class SongClient extends ClientService {
       return;
     }
 
-    if (QueueService.isUserQueueFull()) {
+    if (await QueueService.isUserQueueFull()) {
       res.json({ success: false, message: "The queue is full." });
       console.log("User queue is full");
       return;

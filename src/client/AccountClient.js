@@ -246,7 +246,7 @@ class AccountClient extends ClientService {
     }
 
     console.log("ADMIN fetching user queue");
-    res.json(QueueService.getUserQueue());
+    res.json(await QueueService.getUserQueue());
   }
 
   async getAudioQueue(req, res) {
@@ -274,7 +274,7 @@ class AccountClient extends ClientService {
     }
 
     console.log("ADMIN editing user queue");
-    QueueService.editUserQueue(req.body);
+    await QueueService.editUserQueue(req.body);
     res.json({ message: "User queue updated successfully" });
   }
 

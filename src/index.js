@@ -8,6 +8,7 @@ import ProxyService from "./services/proxy.js";
 import QueueService from "./services/queue.js";
 import SongController from "./controllers/songController.js";
 import DatabaseService from "./services/db/DatabaseService.js";
+import RequestModelService from "./services/db/RequestModelService.js";
 
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || "*",
@@ -48,6 +49,7 @@ app.listen(PORT, async () => {
   }
 
   await DatabaseService.initialize();
+  await RequestModelService.initialize();
   await SpotifyService.initialize();
   SongController.initialize();
 });
