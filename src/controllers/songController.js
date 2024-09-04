@@ -101,7 +101,6 @@ class SongController extends EventEmitter {
       }
       console.error("Error getting next song:", error.message);
       console.log("Skipping song:", trackId);
-      // remove the song from the queue
       await QueueService.markSongAsFailed(trackId, requestId);
     }
 
@@ -171,11 +170,11 @@ class SongController extends EventEmitter {
         this._writeDataToClients(data);
       })
       .on("end", () => {
-        this.removeListener("forceStopSong", handleForceStop);
+        readable.close();
         this.songPlaying = false;
+        this.removeListener("forceStopSong", handleForceStop);
         console.log("Song ended");
         this.emit("songEnded");
-        readable.close();
         fs.unlinkSync(path);
       });
 

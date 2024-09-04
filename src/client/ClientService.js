@@ -1,8 +1,10 @@
 import EventEmitter from "events";
 import jwt from "jsonwebtoken";
+import AccountModelService from "../services/db/AccountModelService.js";
 
 class ClientService extends EventEmitter {
   static _clients = new Set();
+  static _listeners = new Set();
 
   constructor() {
     super();
@@ -26,6 +28,22 @@ class ClientService extends EventEmitter {
 
   static hasActiveClients() {
     return this._clients.size > 0;
+  }
+
+  static async addClient(res, handle) {
+    if (res) this._clients.add(res);
+    if (handle) {
+      this._listeners.add(handle);
+      await AccountModelService.updateUserOnlineStatus(handle, true);
+    }
+  }
+
+  static async removeClient(res, handle) {
+    this._clients.delete(res);
+    this._listeners.delete(handle);
+    if (handle) {
+      await AccountModelService.updateUserOnlineStatus(handle, false);
+    }
   }
 
   _clientifyMetadata(metadata) {

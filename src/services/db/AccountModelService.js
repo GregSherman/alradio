@@ -1,12 +1,18 @@
 import Account from "../../models/Account.js";
 import bcrypt from "bcrypt";
+import SongController from "../../controllers/songController.js";
+import ClientService from "../../client/ClientService.js";
 
 const PERMISSION_MAP = {
   noRateLimit: ["admin"],
 };
 
 class AccountModelService {
-  // Get a user's public profile
+  async initialize() {
+    SongController.on("songEnded", () => this._incrementListenersPlayCount);
+    await this._forceAllUsersOffline();
+  }
+
   async getPublicUserProfile(handle) {
     return Account.findOne(
       { handle },
@@ -42,7 +48,6 @@ class AccountModelService {
     return user.role === "admin";
   }
 
-  // Get private profile
   async getUserProfile(handle) {
     return Account.findOne({ handle }, { passwordHash: 0, _id: 0 })
       .lean()
@@ -57,31 +62,26 @@ class AccountModelService {
     return bcrypt.compare(password, user.passwordHash);
   }
 
-  // Update a user's profile
   async updateUserProfile(handle, updateData) {
     return Account.updateOne({ handle }, { $set: updateData }).exec();
   }
 
-  // Add a new user profile
   async addUserProfile(profileData) {
     const newAccount = new Account(profileData);
     return newAccount.save();
   }
 
-  // Update the user's avatar
   async updateUserAvatar(handle, avatarUrl) {
     return Account.updateOne({ handle }, { $set: { avatarUrl } }).exec();
   }
 
-  // Update the user's online status
-  async updateUserStatus(handle, isOnline) {
+  async updateUserOnlineStatus(handle, isOnline) {
     return Account.updateOne(
       { handle },
       { $set: { isOnline, lastOnline: isOnline ? null : new Date() } },
     ).exec();
   }
 
-  // Update the user's customization preferences
   async updateCustomizationPreferences(handle, preferences) {
     return Account.updateOne(
       { handle },
@@ -89,11 +89,19 @@ class AccountModelService {
     ).exec();
   }
 
-  // Increment the number of songs the user has listened to
-  async incrementSongsListened(handle) {
-    return Account.updateOne(
-      { handle },
-      { $inc: { numberOfSongsListened: 1 } },
+  async _incrementListenersPlayCount() {
+    ClientService._listeners.forEach(async (handle) => {
+      await Account.updateOne(
+        { handle },
+        { $inc: { numberOfSongsListened: 1 } },
+      ).exec();
+    });
+  }
+
+  async _forceAllUsersOffline() {
+    Account.updateMany(
+      { isOnline: true },
+      { $set: { isOnline: false } },
     ).exec();
   }
 

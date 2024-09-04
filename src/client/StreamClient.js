@@ -1,8 +1,6 @@
 import ClientService from "./ClientService.js";
 
 class StreamClient extends ClientService {
-  listeners = new Set();
-
   addClientToStream(req, res) {
     res.writeHead(200, {
       "Content-Type": "audio/mpeg",
@@ -13,24 +11,21 @@ class StreamClient extends ClientService {
       "Surrogate-Control": "no-store",
     });
 
-    // get the handle from the query params.
     const handle = req.query.handle;
-
-    ClientService._clients.add(res);
-    this.listeners.add(handle);
+    ClientService.addClient(res, handle);
     this.emit("clientConnected");
+
     res.on("close", () => {
-      ClientService._clients.delete(res);
-      this.listeners.delete(handle);
+      ClientService.removeClient(res, handle);
       this.emit("clientDisconnected");
     });
   }
 
   getListeners(req, res) {
     // listener starts with anon followed by 20 numbers is an anonymous listener.
-    const listeners = Array.from(this.listeners);
+    const listeners = Array.from(ClientService._listeners);
     const loggedInListeners = listeners.filter(
-      (listener) => !listener.startsWith("anon"),
+      (listener) => listener.length <= 20,
     );
     const anonListeners = listeners.filter(
       (listener) => listener.startsWith("anon") && listener.length === 24,
@@ -46,8 +41,10 @@ class StreamClient extends ClientService {
   }
 
   tuneOut(req, res) {
+    // This will remove the listener even if they are still listening in another tab.
+    // TODO: find a way to work around this for more accurate listener count
     const handle = req.query.handle;
-    this.listeners.delete(handle);
+    ClientService.removeClient(null, handle);
     res.json({ success: true });
   }
 }
