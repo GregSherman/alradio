@@ -99,8 +99,10 @@ class SongController extends EventEmitter {
         // something real bad happened, it will happen again. end the program
         throw error;
       }
-      console.error("Error getting next song:", error);
+      console.error("Error getting next song:", error.message);
       console.log("Skipping song:", trackId);
+      // remove the song from the queue
+      await QueueService.markSongAsFailed(trackId, requestId);
     }
 
     this._setStateNotDownloading();
@@ -125,7 +127,6 @@ class SongController extends EventEmitter {
     this.currentSongMetadata = metadata;
     await TrackModelService.markSongAsPlayed(
       metadata.trackId,
-      metadata.userSubmittedId,
       metadata.requestId,
     );
     console.log(
@@ -202,6 +203,11 @@ class SongController extends EventEmitter {
 
   async _gatherSongFiles(trackMetadata) {
     // Download the track and generate an intro speech. Skip song if either fails
+
+    if (!trackMetadata.urlForPlatform.youtube) {
+      throw new Error("No youtube url for track. Skipping song.");
+    }
+
     const audioFilePath = await this._downloadTrack(
       trackMetadata.urlForPlatform.youtube,
     );

@@ -108,6 +108,10 @@ class QueueService extends EventEmitter {
   editAudioQueue(newQueue) {
     this._audioQueue = newQueue;
   }
+
+  async markSongAsFailed(trackId, requestId) {
+    await RequestModelService.markRequestAsFailed(requestId);
+  }
 }
 
 export default new QueueService();

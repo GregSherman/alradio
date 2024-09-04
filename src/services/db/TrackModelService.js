@@ -1,4 +1,3 @@
-import HistoryModelService from "./HistoryModelService.js";
 import RequestModelService from "./RequestModelService.js";
 import Track from "../../models/Track.js";
 
@@ -13,17 +12,10 @@ class TrackModelService {
     await Track.updateOne({ trackId }, trackData, { upsert: true }).exec();
   }
 
-  async markSongAsPlayed(trackId, userSubmittedId = null, requestId = null) {
+  async markSongAsPlayed(trackId, requestId = null) {
     await Track.updateOne({ trackId }, { $inc: { playedCount: 1 } }).exec();
-    const historyEntry = await HistoryModelService.addPlayedTrack(
-      trackId,
-      userSubmittedId,
-    );
     if (requestId) {
-      await RequestModelService.markRequestAsPlayed(
-        requestId,
-        historyEntry._id,
-      );
+      await RequestModelService.markRequestAsPlayed(requestId);
     }
   }
 

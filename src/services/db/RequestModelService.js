@@ -81,14 +81,11 @@ class RequestModelService {
   }
 
   async updateRequestQueue(newQueue) {
-    // the newqueue is an array of objects with all the fields of a request
-    // simply wipe the old requested and pending requests and replace them with the new queue
     await Request.deleteMany({ playStatus: { $in: ["requested", "pending"] } });
     await Request.insertMany(newQueue);
   }
 
   async isUserRateLimited(userSubmittedId) {
-    // check if they have submitted 3 requests in the last hour
     const cutoff = new Date(Date.now() - 3600 * 1000);
     return (
       (await Request.countDocuments({
@@ -96,6 +93,14 @@ class RequestModelService {
         dateRequested: { $gte: cutoff },
       })) >= 3
     );
+  }
+
+  async markRequestAsFailed(requestId) {
+    const request = await Request.findById(requestId);
+    if (request) {
+      request.playStatus = "failed";
+      await request.save();
+    }
   }
 }
 
