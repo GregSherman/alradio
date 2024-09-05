@@ -1,7 +1,22 @@
+import AccountModelService from "../services/db/AccountModelService.js";
 import ClientService from "./ClientService.js";
 
 class StreamClient extends ClientService {
-  addClientToStream(req, res) {
+  async addClientToStream(req, res) {
+    // TODO: implement a way to use tokens for existing users
+    const handle = req.query.handle;
+    // only allow handles that exist in the db or start with "anon" followed by 20 chars
+    if (
+      !handle ||
+      !(
+        (await AccountModelService.isHandleTaken(handle)) ||
+        (handle.startsWith("anon") && handle.length === 24)
+      )
+    ) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
     res.writeHead(200, {
       "Content-Type": "audio/mpeg",
       Connection: "keep-alive",
@@ -11,7 +26,6 @@ class StreamClient extends ClientService {
       "Surrogate-Control": "no-store",
     });
 
-    const handle = req.query.handle;
     ClientService.addClient(res, handle);
     this.emit("clientConnected");
 
@@ -44,6 +58,23 @@ class StreamClient extends ClientService {
     // This will remove the listener even if they are still listening in another tab.
     // TODO: find a way to work around this for more accurate listener count
     const handle = req.query.handle;
+    const authHandle = this.authenticateLoose(req);
+
+    // Only allow the listener to tune out if they are the same listener
+    if (authHandle && authHandle !== handle) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    // Only allow anonymous listeners to tune themselves out. (It is unlikely an anonymous listener will be able to tune out another anonymous listener)
+    if (
+      !authHandle &&
+      (!handle || handle.length !== 24 || !handle.startsWith("anon"))
+    ) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
     ClientService.removeClient(null, handle);
     res.json({ success: true });
   }

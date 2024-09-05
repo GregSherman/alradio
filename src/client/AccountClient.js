@@ -132,7 +132,7 @@ class AccountClient extends ClientService {
   }
 
   async getPrivateProfile(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -147,7 +147,7 @@ class AccountClient extends ClientService {
   }
 
   async updateProfile(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     let { handle } = req.params;
     handle = handle.trim().toLowerCase();
     const updateData = req.body;
@@ -191,7 +191,7 @@ class AccountClient extends ClientService {
   }
 
   async getHandleAndPictureFromToken(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -207,7 +207,7 @@ class AccountClient extends ClientService {
 
   // admin only
   async skipCurrentSong(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -223,7 +223,7 @@ class AccountClient extends ClientService {
   }
 
   async getSuggestionQueue(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -236,7 +236,7 @@ class AccountClient extends ClientService {
   }
 
   async getUserQueue(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -250,7 +250,7 @@ class AccountClient extends ClientService {
   }
 
   async getAudioQueue(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -264,7 +264,7 @@ class AccountClient extends ClientService {
   }
 
   async editUserQueue(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -279,7 +279,7 @@ class AccountClient extends ClientService {
   }
 
   async editSuggestionQueue(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
@@ -294,7 +294,7 @@ class AccountClient extends ClientService {
   }
 
   async editAudioQueue(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }

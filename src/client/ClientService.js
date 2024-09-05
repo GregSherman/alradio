@@ -10,7 +10,7 @@ class ClientService extends EventEmitter {
     super();
   }
 
-  authenticate(req, res) {
+  authenticateStrict(req, res) {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       res.status(401).json({ message: "Unauthorized" });
@@ -23,6 +23,18 @@ class ClientService extends EventEmitter {
     } catch (err) {
       res.status(401).json({ message: "Unauthorized" });
       return;
+    }
+  }
+
+  authenticateLoose(req) {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return null;
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      return decoded.handle;
+    } catch (err) {
+      return null;
     }
   }
 

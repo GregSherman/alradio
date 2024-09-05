@@ -90,7 +90,7 @@ class SongClient extends ClientService {
   }
 
   async submitSongRequest(req, res) {
-    const authHandle = this.authenticate(req, res);
+    const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
       return;
     }
