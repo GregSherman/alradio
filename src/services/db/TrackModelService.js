@@ -1,5 +1,6 @@
 import RequestModelService from "./RequestModelService.js";
 import Track from "../../models/Track.js";
+import HistoryModelService from "./HistoryModelService.js";
 
 class TrackModelService {
   async getSongMetadata(trackId) {
@@ -16,6 +17,8 @@ class TrackModelService {
     await Track.updateOne({ trackId }, { $inc: { playedCount: 1 } }).exec();
     if (requestId) {
       await RequestModelService.markRequestAsPlayed(requestId);
+    } else {
+      await HistoryModelService.addPlayedTrack(trackId);
     }
   }
 
