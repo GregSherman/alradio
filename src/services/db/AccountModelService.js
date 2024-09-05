@@ -76,10 +76,14 @@ class AccountModelService {
   }
 
   async updateUserOnlineStatus(handle, isOnline) {
-    return Account.updateOne(
-      { handle },
-      { $set: { isOnline, lastOnline: isOnline ? null : new Date() } },
-    ).exec();
+    if (isOnline) {
+      return Account.updateOne({ handle }, { $set: { isOnline } }).exec();
+    } else {
+      return Account.updateOne(
+        { handle },
+        { $set: { isOnline, lastOnline: new Date() } },
+      ).exec();
+    }
   }
 
   async updateCustomizationPreferences(handle, preferences) {
@@ -102,6 +106,7 @@ class AccountModelService {
     Account.updateMany(
       { isOnline: true },
       { $set: { isOnline: false } },
+      { $set: { lastOnline: new Date() } },
     ).exec();
   }
 
