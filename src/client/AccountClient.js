@@ -118,7 +118,27 @@ class AccountClient extends ClientService {
 
     const token = jwt.sign({ handle }, process.env.JWT_SECRET);
     console.log("user logged in with handle:", handle);
-    res.json({ token });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.ENVIRONMENT === "prod",
+      sameSite: "none",
+    });
+    res.json({});
+  }
+
+  async logout(req, res) {
+    const authHandle = this.authenticateStrict(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    console.log("Logging out user with handle:", authHandle);
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.ENVIRONMENT === "prod",
+      sameSite: "none",
+    });
+    res.json({});
   }
 
   async getPublicProfile(req, res) {

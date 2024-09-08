@@ -10,14 +10,17 @@ import SongController from "./controllers/songController.js";
 import DatabaseService from "./services/db/DatabaseService.js";
 import RequestModelService from "./services/db/RequestModelService.js";
 import AccountModelService from "./services/db/AccountModelService.js";
+import cookieParser from "cookie-parser";
 
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || "*",
   optionsSuccessStatus: 200,
+  credentials: true,
 };
 
 const app = express();
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json());
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

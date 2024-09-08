@@ -8,7 +8,6 @@ const router = Router();
 // Stream Routes
 router.get("/stream", (req, res) => StreamClient.addClientToStream(req, res));
 router.get("/listeners", (req, res) => StreamClient.getListeners(req, res));
-router.get("/tuneout", (req, res) => StreamClient.tuneOut(req, res));
 
 // Song Routes
 router.get("/song/current", (req, res) =>
@@ -23,6 +22,7 @@ router.post("/song/submit", (req, res) =>
 // Account Routes
 router.post("/register", (req, res) => AccountClient.register(req, res));
 router.post("/login", (req, res) => AccountClient.login(req, res));
+router.post("/logout", (req, res) => AccountClient.logout(req, res));
 router.get("/handle", (req, res) =>
   AccountClient.getHandleAndPictureFromToken(req, res),
 );
