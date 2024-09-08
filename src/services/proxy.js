@@ -48,7 +48,11 @@ class ProxyService {
     console.log("Testing proxy:", proxy.host, proxy.port);
     try {
       await axios.get("http://httpbin.org/ip", {
-        proxy: { host: proxy.host, port: proxy.port },
+        proxy: {
+          host: proxy.host,
+          port: proxy.port,
+        },
+        timeout: 5000,
       });
       console.log("Proxy test successful.");
       return true;
