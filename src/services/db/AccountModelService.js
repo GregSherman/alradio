@@ -9,7 +9,7 @@ const PERMISSION_MAP = {
 
 class AccountModelService {
   async initialize() {
-    SongController.on("songEnded", () => this._incrementListenersPlayCount);
+    SongController.on("songEnded", () => this._incrementListenersPlayCount());
     await this._forceAllUsersOffline();
   }
 
@@ -94,8 +94,10 @@ class AccountModelService {
   }
 
   async _incrementListenersPlayCount() {
+    console.log("Incrementing listener play count");
     ClientService._listeners.forEach(async (handle) => {
-      await Account.updateOne(
+      console.log("Incrementing listener play count for:", handle);
+      Account.updateOne(
         { handle },
         { $inc: { numberOfSongsListened: 1 } },
       ).exec();
