@@ -32,7 +32,7 @@ class StreamClient extends ClientService {
     this.emit("clientConnected");
     res.on("close", () => {
       ClientService.removeClient(res, handle);
-      console.log("disconnected: ", ClientService._listeners);
+      this.emit("clientDisconnected");
     });
   }
 
