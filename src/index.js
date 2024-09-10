@@ -11,6 +11,11 @@ import DatabaseService from "./services/db/DatabaseService.js";
 import RequestModelService from "./services/db/RequestModelService.js";
 import AccountModelService from "./services/db/AccountModelService.js";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || "*",
@@ -21,6 +26,8 @@ const corsOptions = {
 const app = express();
 app.use(cors(corsOptions));
 app.use(cookieParser());
+// serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(express.json());
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
