@@ -79,6 +79,10 @@ class QueueService extends EventEmitter {
     return RequestModelService.isTrackRequested(trackId);
   }
 
+  async getQueueSize() {
+    return (await RequestModelService.getQueueSize()) + this._audioQueue.length;
+  }
+
   audioQueueHasTrack(trackId) {
     return this._audioQueue.some(
       (audioFile) => audioFile.metadata.trackId === trackId,

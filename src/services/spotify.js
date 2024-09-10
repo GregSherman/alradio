@@ -76,17 +76,20 @@ class SpotifyService {
         params: {
           q: query,
           type: "track",
-          limit: 1,
+          limit: 5,
         },
       });
 
       if (response.data.tracks.items.length === 0) {
         return;
       }
-
-      return await this._convertAndSaveSpotifyTrackMetadata(
-        response.data.tracks.items[0],
+      const tracks = await Promise.all(
+        response.data.tracks.items.map(
+          async (track) =>
+            await this._convertAndSaveSpotifyTrackMetadata(track),
+        ),
       );
+      return tracks;
     } catch (error) {
       if (error.response?.status === 401) {
         await this._authenticate();
