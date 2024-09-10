@@ -102,6 +102,10 @@ class RequestModelService {
       await request.save();
     }
   }
+
+  async getQueueSize() {
+    return Request.countDocuments({ playStatus: "requested" });
+  }
 }
 
 export default new RequestModelService();

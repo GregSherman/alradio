@@ -41,13 +41,14 @@ class SongClient extends ClientService {
 
   async _handleSearchQuerySubmit(req, res, query) {
     try {
-      const track = await SpotifyService.searchTrack(query);
-      if (!track?.trackId) {
+      let tracks = await SpotifyService.searchTrack(query);
+      if (!tracks.length) {
         res.json({ success: false, message: "Song not found" });
         return;
       }
 
-      res.json({ success: true, metadata: this._clientifyMetadata(track) });
+      tracks = tracks.map((track) => this._clientifyMetadata(track));
+      res.json({ success: true, tracks });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Internal server error" });
@@ -78,7 +79,8 @@ class SongClient extends ClientService {
     }
 
     await QueueService.addToUserQueue(trackId, userSubmittedId);
-    res.json({ success: true, message: "Song added to queue." });
+    const queueLength = (await QueueService.getQueueSize()) - 1;
+    res.json({ success: true, queueLength });
   }
 
   async _isTrackIdQueued(trackId) {
