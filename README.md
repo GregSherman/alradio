@@ -5,8 +5,8 @@ The server for AL Radio.
 ## Setup
 
 - `npm i`
+- `pip install -r requirements.txt`.
 - FFmpeg: `brew install ffmpeg` or your system equivalent.
-- SpotDL: `pip install spotdl`.
 
 ### Use Local Database
 
@@ -41,6 +41,20 @@ OPENAI_API_KEY=
 MONGO_URI=
 ```
 
+### Security
+
+The `CORS_ORIGIN` should be the client origin. If the client is running at `http://localhost:3000`, then that will be this value.
+
+The `JWT_SECRET` is the secret key that derives the JWTs for the clients. Choose any string locally, the tokens will not be secure.
+
+The `ENVIRONMENT` being set to `dev` weakens various securities in order to ease testing. Set to `prod` to test security aspects.
+
+```conf
+CORS_ORIGIN=http://localhost:3000
+JWT_SECRET=test-jwt-secret
+ENVIRONMENT=dev
+```
+
 ### HTTP Proxy
 
 Youtube has been cracking down on video downloading by IP banning large ranges. To get around this, AL Radio is equipped with the ability to send requests through proxy servers.
@@ -50,7 +64,7 @@ Youtube has been cracking down on video downloading by IP banning large ranges. 
 PROXY_LIST_URL=
 ```
 
-Populate this environment variable with a URL that returns a list of proxy servers, separated by `/r/n`.
+Populate this environment variable with a URL that returns a list of proxy servers, separated by `/r/n`. If AL Radio functions locally without this, there is no need to populate it.
 
 ### Customize
 
@@ -65,13 +79,14 @@ INITIAL_TRACK_IDS=0HNYFFOwID6HGSqy5xr4av,3f1yAg2u74Wn8Jj14zhJGS,5gPNOBxIfT1Aap0J
 
 #### Port
 
-The server will exist on the port defined in `.env`, defaulting to `3000`.
+The server will exist on the port defined in `.env`, defaulting to `3002`.
 
 ```conf
 # .env
-PORT=12345
+PORT=3002
 ```
 
 ## Run
 
+- Ensure MongoDB is running locally.
 - `npm run start:local`

@@ -36,7 +36,7 @@ app.use((err, req, res, next) => {
 });
 app.use("/", songRoutes);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, async () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 
