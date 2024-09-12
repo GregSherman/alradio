@@ -31,7 +31,7 @@ MONGO_URI=mongodb+srv://{username}:{password}@{appname}.s04om.mongodb.net/...
 
 ### Add Credentials
 
-These 4 credentials are required for AL Radio to function.
+These 4 credentials are required for AL Radio to function normally. You may omit `OPENAI_API_KEY` to use the sample song announcement `sample-tts.mp3` and avoid API costs.
 
 ```conf
 # .env

@@ -187,7 +187,11 @@ class SongController extends EventEmitter {
     await ffmpeg(
       `ffmpeg -i "${first}" -i "${second}" -filter_complex '[0:0][1:0]concat=n=2:v=0:a=1[out]' -map '[out]' -y "${concatenatedAudioPath}"`,
     );
-    fs.unlinkSync(first);
+
+    // don't remove the sample tts file
+    if (process.env.OPENAI_API_KEY) {
+      fs.unlinkSync(first);
+    }
     fs.unlinkSync(second);
     return concatenatedAudioPath;
   }
@@ -201,8 +205,6 @@ class SongController extends EventEmitter {
   }
 
   async _gatherSongFiles(trackMetadata) {
-    // Download the track and generate an intro speech. Skip song if either fails
-
     if (!trackMetadata.urlForPlatform.youtube) {
       throw new Error("No youtube url for track. Skipping song.");
     }
@@ -210,12 +212,20 @@ class SongController extends EventEmitter {
     const audioFilePath = await this._downloadTrack(
       trackMetadata.urlForPlatform.youtube,
     );
-    const announcementText = await OpenAIService.generateSongIntro(
-      trackMetadata,
-      QueueService.getLastQueuedSongMetadata() || this.currentSongMetadata,
-    );
-    const announcementAudioPath =
-      await OpenAIService.textToSpeech(announcementText);
+
+    let announcementAudioPath;
+    // If no API key is set, use the sample tts file
+    if (!process.env.OPENAI_API_KEY) {
+      announcementAudioPath = "./sample-tts.mp3";
+    } else {
+      const announcementText = await OpenAIService.generateSongIntro(
+        trackMetadata,
+        QueueService.getLastQueuedSongMetadata() || this.currentSongMetadata,
+      );
+      announcementAudioPath =
+        await OpenAIService.textToSpeech(announcementText);
+    }
+
     if (!audioFilePath || !announcementAudioPath) {
       throw new Error(
         "Failed to download track or generate intro speech. Skipping song.",
