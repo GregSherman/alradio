@@ -122,6 +122,7 @@ class AccountClient extends ClientService {
       httpOnly: true,
       secure: process.env.ENVIRONMENT === "prod",
       sameSite: "none",
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
     });
     res.json({});
   }
