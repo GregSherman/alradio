@@ -42,19 +42,34 @@ class ClientService extends EventEmitter {
     return this._clients.size > 0;
   }
 
-  static async addClient(res, handle) {
-    if (res) this._clients.add(res);
-    if (handle) {
-      this._listeners.add(handle);
-      await AccountModelService.updateUserOnlineStatus(handle, true);
+  static async addClient(res) {
+    if (res) {
+      this._clients.add(res);
+      res.on("close", () => {
+        this.removeClient(res);
+      });
     }
+    this._listeners.add(res.handle);
+    await AccountModelService.updateUserOnlineStatus(res.handle, true);
   }
 
-  static async removeClient(res, handle) {
+  static async removeClient(res) {
+    res.removeAllListeners("close");
     this._clients.delete(res);
-    this._listeners.delete(handle);
-    if (handle) {
-      await AccountModelService.updateUserOnlineStatus(handle, false);
+    this._listeners.delete(res.handle);
+    await AccountModelService.updateUserOnlineStatus(res.handle, false);
+  }
+
+  static getResFromHandle(handle) {
+    return Array.from(this._clients).find((res) => res.handle === handle);
+  }
+
+  static async changeClientHandle(oldHandle, newHandle) {
+    const res = this.getResFromHandle(oldHandle);
+    if (res) {
+      await this.removeClient(res);
+      res.handle = newHandle;
+      await this.addClient(res);
     }
   }
 

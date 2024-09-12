@@ -1,23 +1,22 @@
 import ClientService from "./ClientService.js";
 
 class StreamClient extends ClientService {
-  _getStreamId(req, res) {
-    let handle = this.authenticateLoose(req);
-    if (!handle) {
-      handle =
-        req.cookies["anonymous-stream-id"] ||
-        `anonymous-listener-${Math.random().toString(36)}`;
-      res.cookie("anonymous-stream-id", handle, {
+  getOrGenerateStreamId(req, res) {
+    if (!req.cookies["anonymous-stream-id"]) {
+      const streamId = `anonymous-listener-${Math.random().toString(36)}`;
+      res.cookie("anonymous-stream-id", streamId, {
         httpOnly: true,
         sameSite: "strict",
         secure: process.env.ENVIRONMENT === "prod",
       });
+      return streamId;
     }
-    return handle;
+    return req.cookies["anonymous-stream-id"];
   }
 
   async addClientToStream(req, res) {
-    let handle = this._getStreamId(req, res);
+    let handle =
+      this.authenticateLoose(req) || this.getOrGenerateStreamId(req, res);
 
     res.writeHead(200, {
       "Content-Type": "audio/mpeg",
@@ -28,12 +27,10 @@ class StreamClient extends ClientService {
       "Surrogate-Control": "no-store",
     });
 
-    ClientService.addClient(res, handle);
+    res.handle = handle;
+
+    ClientService.addClient(res);
     this.emit("clientConnected");
-    res.on("close", () => {
-      ClientService.removeClient(res, handle);
-      this.emit("clientDisconnected");
-    });
   }
 
   getListeners(req, res) {

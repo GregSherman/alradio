@@ -7,6 +7,7 @@ import ClientService from "./ClientService.js";
 import SongController from "../controllers/songController.js";
 import leoProfanity from "leo-profanity";
 import emailValidator from "email-validator";
+import StreamClient from "./StreamClient.js";
 
 class AccountClient extends ClientService {
   async register(req, res) {
@@ -124,6 +125,14 @@ class AccountClient extends ClientService {
       sameSite: "none",
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
     });
+
+    const streamId = StreamClient.getOrGenerateStreamId(req, res);
+    res.clearCookie("anonymous-stream-id", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.ENVIRONMENT === "prod",
+    });
+    await ClientService.changeClientHandle(streamId, handle);
     res.json({});
   }
 
@@ -139,6 +148,8 @@ class AccountClient extends ClientService {
       secure: process.env.ENVIRONMENT === "prod",
       sameSite: "none",
     });
+    const streamId = StreamClient.getOrGenerateStreamId(req, res);
+    await ClientService.changeClientHandle(authHandle, streamId);
     res.json({});
   }
 
