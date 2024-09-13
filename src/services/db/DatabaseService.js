@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 class DatabaseService {
   constructor() {
     this._mongoUri = process.env.MONGO_URI;
-    this._dbName = "ALsDB";
+    this._dbName = process.env.ENVIRONMENT === "prod" ? "ALsDB" : "ALsDB-stage";
   }
 
   async initialize() {
