@@ -13,6 +13,33 @@ class AccountModelService {
     await this._forceAllUsersOffline();
   }
 
+  async getUserProfile(handle) {
+    return Account.findOne(
+      { handle },
+      {
+        ALThoughts: 1,
+        avatarUrl: 1,
+        bio: 1,
+        createdDate: 1,
+        favouriteSong: 1,
+        friends: 1,
+        handle: 1,
+        isOnline: 1,
+        lastOnline: 1,
+        location: 1,
+        numberOfSongsListened: 1,
+        role: 1,
+        spotifyUserId: 1,
+
+        customizationPreferences: 1,
+        email: 1,
+        isEmailVerified: 1,
+      },
+    )
+      .lean()
+      .exec();
+  }
+
   async getPublicUserProfile(handle) {
     return Account.findOne(
       { handle },
@@ -29,6 +56,7 @@ class AccountModelService {
         location: 1,
         numberOfSongsListened: 1,
         role: 1,
+        spotifyUserId: 1,
       },
     )
       .lean()
@@ -46,12 +74,6 @@ class AccountModelService {
   async isAdmin(handle) {
     const user = await Account.findOne({ handle }, { role: 1 }).exec();
     return user.role === "admin";
-  }
-
-  async getUserProfile(handle) {
-    return Account.findOne({ handle }, { passwordHash: 0, _id: 0 })
-      .lean()
-      .exec();
   }
 
   async authorizeUser(handle, password) {
@@ -115,6 +137,59 @@ class AccountModelService {
   async userHasPermission(handle, permission) {
     const user = await Account.findOne({ handle }, { role: 1 }).exec();
     return PERMISSION_MAP[permission].includes(user.role);
+  }
+
+  async addSpotifyTokens(handle, token, refreshToken) {
+    return Account.updateOne(
+      { handle },
+      {
+        $set: {
+          spotifyAccessToken: token,
+          spotifyRefreshToken: refreshToken,
+        },
+      },
+    ).exec();
+  }
+
+  async addSpotifyUserId(handle, userId) {
+    return Account.updateOne(
+      { handle },
+      { $set: { spotifyUserId: userId } },
+    ).exec();
+  }
+
+  async addSpotifyQuickAddPlaylistId(handle, playlistId) {
+    return Account.updateOne(
+      { handle },
+      { $set: { spotifyQuickAddPlaylistId: playlistId } },
+    ).exec();
+  }
+
+  async getSpotifyTokens(handle) {
+    const user = await Account.findOne(
+      { handle },
+      {
+        spotifyAccessToken: 1,
+        spotifyRefreshToken: 1,
+      },
+    ).exec();
+    return {
+      accessToken: user.spotifyAccessToken,
+      refreshToken: user.spotifyRefreshToken,
+    };
+  }
+
+  async getSpotifyUserId(handle) {
+    const user = await Account.findOne({ handle }, { spotifyUserId: 1 }).exec();
+    return user.spotifyUserId;
+  }
+
+  async getSpotifyQuickAddPlaylistId(handle) {
+    const user = await Account.findOne(
+      { handle },
+      { spotifyQuickAddPlaylistId: 1 },
+    ).exec();
+    return user.spotifyQuickAddPlaylistId;
   }
 }
 

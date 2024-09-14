@@ -174,6 +174,7 @@ class AccountClient extends ClientService {
       console.log("Profile not found");
       return res.status(404).json({ message: "Profile not found" });
     }
+    profile.isPrivate = true;
 
     res.json(profile);
   }
