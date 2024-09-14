@@ -2,6 +2,7 @@ import { Router } from "express";
 import StreamClient from "../client/StreamClient.js";
 import SongClient from "../client/SongClient.js";
 import AccountClient from "../client/AccountClient.js";
+import SpotifyClient from "../client/auth_services/SpotifyClient.js";
 
 const router = Router();
 
@@ -35,6 +36,17 @@ router.get("/accounts/:handle", (req, res) =>
 );
 router.get("/accounts/:handle/history", (req, res) =>
   AccountClient.getHistory(req, res),
+);
+
+// Authorized Services Routes
+router.get("/auth/spotify/callback", (req, res) =>
+  SpotifyClient.authorize(req, res),
+);
+router.post("/auth/spotify/add", (req, res) =>
+  SpotifyClient.addSongToPlaylist(req, res),
+);
+router.post("/auth/spotify/unlink", (req, res) =>
+  SpotifyClient.removeAuthorization(req, res),
 );
 
 // Admin Routes
