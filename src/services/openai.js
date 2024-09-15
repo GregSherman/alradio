@@ -135,7 +135,7 @@ class OpenAiService {
         const execAsync = promisify(exec);
         await execAsync(command);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to adjust audio volume:", error);
       }
 
       fs.unlinkSync(tempAudioPath);

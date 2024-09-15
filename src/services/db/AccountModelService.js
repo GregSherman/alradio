@@ -1,7 +1,7 @@
 import Account from "../../models/Account.js";
 import bcrypt from "bcrypt";
 import SongController from "../../controllers/songController.js";
-import ClientService from "../../client/ClientService.js";
+import ClientManager from "../../client/ClientManager.js";
 
 const PERMISSION_MAP = {
   noRateLimit: ["admin"],
@@ -120,9 +120,7 @@ class AccountModelService {
   }
 
   async _incrementListenersPlayCount() {
-    console.log("Incrementing listener play count");
-    ClientService._listeners.forEach(async (handle) => {
-      console.log("Incrementing listener play count for:", handle);
+    ClientManager._listeners.keys().forEach(async (handle) => {
       Account.updateOne(
         { handle },
         { $inc: { numberOfSongsListened: 1 } },

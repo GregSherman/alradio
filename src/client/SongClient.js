@@ -50,7 +50,7 @@ class SongClient extends ClientService {
       tracks = tracks.map((track) => this._clientifyMetadata(track));
       res.json({ success: true, tracks });
     } catch (error) {
-      console.error(error);
+      console.error("Error searching for track:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
@@ -59,13 +59,11 @@ class SongClient extends ClientService {
     const track = await SpotifyService.getTrackData(trackId);
     if (!track?.trackId) {
       res.json({ success: false, message: "Song not found" });
-      console.log("Song not found");
       return;
     }
 
     if (await this._isTrackIdQueued(trackId)) {
       res.json({ success: false, message: "Song is already in the queue." });
-      console.log("Song is already in the queue");
       return;
     }
 
@@ -74,7 +72,6 @@ class SongClient extends ClientService {
         success: false,
         message: "Song has been played too recently.",
       });
-      console.log("Song has been played recently");
       return;
     }
 
