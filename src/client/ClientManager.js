@@ -39,7 +39,7 @@ class ClientManager {
   async removeClient(res) {
     res.removeAllListeners("close");
     this._clients.delete(res);
-    clearTimeout(this._listeners.get(res.handle).timeout);
+    clearTimeout(this._listeners.get(res.handle)?.timeout);
     this._listeners.delete(res.handle);
     await AccountModelService.updateUserOnlineStatus(res.handle, false);
   }
