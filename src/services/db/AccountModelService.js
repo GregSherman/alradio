@@ -157,16 +157,11 @@ class AccountModelService {
   }
 
   async getLastFMUsername(handle) {
-    const user = await Account.findOne(
-      { handle },
-      { lastFMUsername: 1 },
-    ).exec();
-    return user.lastFMUsername;
+    return Account.findOne({ handle }, { lastFMUsername: 1 }).exec();
   }
 
   async getLastFMToken(handle) {
-    const user = await Account.findOne({ handle }, { lastFMToken: 1 }).exec();
-    return user.lastFMToken;
+    return Account.findOne({ handle }, { lastFMToken: 1 }).exec();
   }
 
   // Spotify
@@ -205,22 +200,17 @@ class AccountModelService {
       },
     ).exec();
     return {
-      accessToken: user.spotifyAccessToken,
-      refreshToken: user.spotifyRefreshToken,
+      accessToken: user?.spotifyAccessToken,
+      refreshToken: user?.spotifyRefreshToken,
     };
   }
 
   async getSpotifyUserId(handle) {
-    const user = await Account.findOne({ handle }, { spotifyUserId: 1 }).exec();
-    return user.spotifyUserId;
+    return Account.findOne({ handle }, { spotifyUserId: 1 }).exec();
   }
 
   async getSpotifyQuickAddPlaylistId(handle) {
-    const user = await Account.findOne(
-      { handle },
-      { spotifyQuickAddPlaylistId: 1 },
-    ).exec();
-    return user.spotifyQuickAddPlaylistId;
+    return Account.findOne({ handle }, { spotifyQuickAddPlaylistId: 1 }).exec();
   }
 }
 

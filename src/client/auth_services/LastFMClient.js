@@ -46,7 +46,7 @@ class LastFMClient extends ClientService {
   }
 
   async scrobbleTrackForUser(handle, track) {
-    const sessionKey = await AccountModelService.getLastFMToken(handle);
+    const { sessionKey } = await AccountModelService.getLastFMToken(handle);
     if (!sessionKey) {
       return;
     }
@@ -72,6 +72,10 @@ class LastFMClient extends ClientService {
       );
     } catch (error) {
       console.error("Error scrobbling track for user:", handle, error);
+      if (error.response && error.response.status === 403) {
+        await AccountModelService.addLastFMToken(handle, null);
+        await AccountModelService.addLastFMUsername(handle, null);
+      }
     }
 
     console.log("Scrobbled track for user:", handle);
