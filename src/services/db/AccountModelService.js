@@ -1,7 +1,7 @@
 import Account from "../../models/Account.js";
 import bcrypt from "bcrypt";
 import SongController from "../../controllers/songController.js";
-import ClientService from "../../client/ClientService.js";
+import ClientManager from "../../client/ClientManager.js";
 
 const PERMISSION_MAP = {
   noRateLimit: ["admin"],
@@ -29,6 +29,8 @@ class AccountModelService {
         location: 1,
         numberOfSongsListened: 1,
         role: 1,
+
+        lastFMUsername: 1,
         spotifyUserId: 1,
 
         customizationPreferences: 1,
@@ -56,6 +58,8 @@ class AccountModelService {
         location: 1,
         numberOfSongsListened: 1,
         role: 1,
+
+        lastFMUsername: 1,
         spotifyUserId: 1,
       },
     )
@@ -116,9 +120,7 @@ class AccountModelService {
   }
 
   async _incrementListenersPlayCount() {
-    console.log("Incrementing listener play count");
-    ClientService._listeners.forEach(async (handle) => {
-      console.log("Incrementing listener play count for:", handle);
+    ClientManager._listeners.keys().forEach(async (handle) => {
       Account.updateOne(
         { handle },
         { $inc: { numberOfSongsListened: 1 } },
@@ -139,6 +141,30 @@ class AccountModelService {
     return PERMISSION_MAP[permission].includes(user.role);
   }
 
+  // LastFM
+  async addLastFMToken(handle, token) {
+    return Account.updateOne(
+      { handle },
+      { $set: { lastFMToken: token } },
+    ).exec();
+  }
+
+  async addLastFMUsername(handle, username) {
+    return Account.updateOne(
+      { handle },
+      { $set: { lastFMUsername: username } },
+    ).exec();
+  }
+
+  async getLastFMUsername(handle) {
+    return Account.findOne({ handle }, { lastFMUsername: 1 }).exec();
+  }
+
+  async getLastFMToken(handle) {
+    return Account.findOne({ handle }, { lastFMToken: 1 }).exec();
+  }
+
+  // Spotify
   async addSpotifyTokens(handle, token, refreshToken) {
     return Account.updateOne(
       { handle },
@@ -174,22 +200,17 @@ class AccountModelService {
       },
     ).exec();
     return {
-      accessToken: user.spotifyAccessToken,
-      refreshToken: user.spotifyRefreshToken,
+      accessToken: user?.spotifyAccessToken,
+      refreshToken: user?.spotifyRefreshToken,
     };
   }
 
   async getSpotifyUserId(handle) {
-    const user = await Account.findOne({ handle }, { spotifyUserId: 1 }).exec();
-    return user.spotifyUserId;
+    return Account.findOne({ handle }, { spotifyUserId: 1 }).exec();
   }
 
   async getSpotifyQuickAddPlaylistId(handle) {
-    const user = await Account.findOne(
-      { handle },
-      { spotifyQuickAddPlaylistId: 1 },
-    ).exec();
-    return user.spotifyQuickAddPlaylistId;
+    return Account.findOne({ handle }, { spotifyQuickAddPlaylistId: 1 }).exec();
   }
 }
 

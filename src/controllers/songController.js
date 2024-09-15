@@ -1,5 +1,4 @@
 /* eslint-disable no-constant-condition */
-import ClientService from "../client/ClientService.js";
 import StreamClient from "../client/StreamClient.js";
 import SpotifyService from "../services/spotify.js";
 import QueueService from "../services/queue.js";
@@ -16,6 +15,7 @@ import ffprobeStatic from "ffprobe-static";
 import { exec } from "child_process";
 import { promisify } from "util";
 import EventEmitter from "events";
+import ClientManager from "../client/ClientManager.js";
 
 class SongController extends EventEmitter {
   constructor() {
@@ -42,13 +42,13 @@ class SongController extends EventEmitter {
   async _player() {
     if (
       this.songPlaying ||
-      !ClientService.hasActiveClients() ||
+      !ClientManager.hasActiveClients() ||
       QueueService.isAudioQueueEmpty()
     ) {
       console.log(
         "Song player not ready:",
         this.songPlaying,
-        !ClientService.hasActiveClients(),
+        !ClientManager.hasActiveClients(),
         QueueService.isAudioQueueEmpty(),
       );
       return;
@@ -71,16 +71,15 @@ class SongController extends EventEmitter {
       return;
     }
 
-    console.log("Gathering next song");
     let { trackId, userSubmittedId, requestId } =
       await QueueService.popNextTrack();
-    console.log("Next song in queue:", trackId, userSubmittedId, requestId);
     if (!trackId) {
       console.log("No more songs in queue. Populating suggestion queue.");
       await SpotifyService.populateSuggestionQueue();
       ({ trackId, userSubmittedId, requestId } =
         await QueueService.popNextTrack());
     }
+    console.log("Next song in queue:", trackId, userSubmittedId, requestId);
 
     this._setStateDownloading(trackId);
 
@@ -111,14 +110,12 @@ class SongController extends EventEmitter {
     this.songDownloading = true;
     this.songDownloadingTrackId = trackId;
     this.emit("downloading");
-    console.log("State set to downloading:", trackId);
   }
 
   _setStateNotDownloading() {
     this.songDownloading = false;
     this.songDownloadingTrackId = null;
     this.emit("notDownloading");
-    console.log("State set to not downloading");
   }
 
   async _markSongAsPlayed(metadata) {
@@ -136,16 +133,11 @@ class SongController extends EventEmitter {
       "from",
       metadata.userSubmittedId,
     );
-    new Promise((resolve) => {
-      setTimeout(() => {
-        this.emit("currentSongMetadataUpdated", metadata);
-        resolve();
-      }, 5000);
-    });
+    this.emit("songStarted", metadata);
   }
 
   _writeDataToClients(data) {
-    ClientService._clients.forEach((client) => client.write(data));
+    ClientManager._clients.forEach((client) => client.write(data));
   }
 
   async _getBitrateFromAudioFile(path) {
@@ -172,8 +164,8 @@ class SongController extends EventEmitter {
       .on("end", () => {
         readable.close();
         this.songPlaying = false;
+        this.currentSongMetadata = {};
         this.removeListener("forceStopSong", handleForceStop);
-        console.log("Song ended");
         this.emit("songEnded");
         fs.unlinkSync(path);
       });

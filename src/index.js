@@ -13,6 +13,7 @@ import AccountModelService from "./services/db/AccountModelService.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import ClientManager from "./client/ClientManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,5 +64,6 @@ app.listen(PORT, async () => {
   await RequestModelService.initialize();
   await AccountModelService.initialize();
   await SpotifyService.initialize();
+  ClientManager.initialize();
   SongController.initialize();
 });

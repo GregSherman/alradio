@@ -1,3 +1,4 @@
+import ClientManager from "./ClientManager.js";
 import ClientService from "./ClientService.js";
 
 class StreamClient extends ClientService {
@@ -29,12 +30,12 @@ class StreamClient extends ClientService {
 
     res.handle = handle;
 
-    ClientService.addClient(res);
+    ClientManager.addClient(res);
     this.emit("clientConnected");
   }
 
   getListeners(req, res) {
-    const listeners = Array.from(ClientService._listeners);
+    const listeners = Array.from(ClientManager._listeners.keys());
     const loggedInListeners = listeners.filter(
       (listener) => !listener.startsWith("anonymous-listener"),
     );

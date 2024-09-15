@@ -49,7 +49,6 @@ class QueueService extends EventEmitter {
   popNextAudioFile() {
     const file = this._audioQueue.shift();
     if (this.audioQueueNeedsFilling()) {
-      console.log("Audio queue needs filling");
       this.emit("audioQueueNeedsFilling");
     }
     return file;

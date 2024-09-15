@@ -173,14 +173,15 @@ class SpotifyClient extends ClientService {
     authHandle,
     playlistName = "AL Radio",
   ) {
-    const userId = await AccountModelService.getSpotifyUserId(authHandle);
-    const playlistId =
+    const { spotifyUserId } =
+      await AccountModelService.getSpotifyUserId(authHandle);
+    const { spotifyQuickAddPlaylistId } =
       await AccountModelService.getSpotifyQuickAddPlaylistId(authHandle);
 
-    if (playlistId) {
+    if (spotifyQuickAddPlaylistId) {
       try {
         const playlistResponse = await axios.get(
-          `https://api.spotify.com/v1/playlists/${playlistId}`,
+          `https://api.spotify.com/v1/playlists/${spotifyQuickAddPlaylistId}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           },
@@ -189,9 +190,15 @@ class SpotifyClient extends ClientService {
         return playlistResponse.data;
       } catch (error) {
         if (error.response && error.response.status === 404) {
+          // the playlist was deleted, make another one
           await AccountModelService.addSpotifyQuickAddPlaylistId(
             authHandle,
             null,
+          );
+          await this._getOrCreatePlaylist(
+            accessToken,
+            authHandle,
+            playlistName,
           );
         } else {
           throw error;
@@ -200,7 +207,7 @@ class SpotifyClient extends ClientService {
     }
 
     const createPlaylistResponse = await axios.post(
-      `https://api.spotify.com/v1/users/${userId}/playlists`,
+      `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
       {
         name: playlistName,
         description: "Playlist created by AL Radio",
