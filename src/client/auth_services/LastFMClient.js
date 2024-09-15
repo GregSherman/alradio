@@ -46,6 +46,10 @@ class LastFMClient extends ClientService {
   }
 
   async scrobbleTrackForUser(handle, track) {
+    if (!track.artist || !track.title) {
+      console.error("Invalid track data:", track);
+      return;
+    }
     console.log("Scrobbling track for user:", handle);
     const { lastFMToken } = await AccountModelService.getLastFMToken(handle);
     if (!lastFMToken) {
