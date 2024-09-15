@@ -23,8 +23,13 @@ class SpotifyClient extends ClientService {
         refreshToken,
       );
 
-      const spotifyId = await this._fetchSpotifyProfile(accessToken);
+      const { spotifyId, spotifyDisplayName } =
+        await this._fetchSpotifyProfile(accessToken);
       await AccountModelService.addSpotifyUserId(authHandle, spotifyId);
+      await AccountModelService.addSpotifyDisplayName(
+        authHandle,
+        spotifyDisplayName,
+      );
 
       res.redirect(302, `${process.env.CLIENT_URL}`);
     } catch (error) {
@@ -165,7 +170,10 @@ class SpotifyClient extends ClientService {
     const spotifyResponse = await axios.get("https://api.spotify.com/v1/me", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    return spotifyResponse.data.id;
+    return {
+      spotifyId: spotifyResponse.data.id,
+      spotifyDisplayName: spotifyResponse.data.display_name,
+    };
   }
 
   async _getOrCreatePlaylist(

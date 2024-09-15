@@ -32,6 +32,7 @@ class AccountModelService {
 
         lastFMUsername: 1,
         spotifyUserId: 1,
+        spotifyDisplayName: 1,
 
         customizationPreferences: 1,
         email: 1,
@@ -61,6 +62,7 @@ class AccountModelService {
 
         lastFMUsername: 1,
         spotifyUserId: 1,
+        spotifyDisplayName: 1,
       },
     )
       .lean()
@@ -181,6 +183,13 @@ class AccountModelService {
     return Account.updateOne(
       { handle },
       { $set: { spotifyUserId: userId } },
+    ).exec();
+  }
+
+  async addSpotifyDisplayName(handle, displayName) {
+    return Account.updateOne(
+      { handle },
+      { $set: { spotifyDisplayName: displayName } },
     ).exec();
   }
 

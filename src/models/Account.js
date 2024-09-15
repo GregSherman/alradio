@@ -24,6 +24,7 @@ const AccountSchema = new mongoose.Schema({
 
   // Spotify
   spotifyUserId: { type: String, default: "" },
+  spotifyDisplayName: { type: String, default: "" },
   spotifyAccessToken: { type: String, default: "" },
   spotifyRefreshToken: { type: String, default: "" },
   spotifyTokenExpiration: { type: Date, default: Date.now },
