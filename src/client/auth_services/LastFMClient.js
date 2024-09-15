@@ -50,14 +50,14 @@ class LastFMClient extends ClientService {
       console.error("Invalid track data:", track);
       return;
     }
+    const lastFMTrack = await this._searchTrack(track);
+    if (!lastFMTrack) {
+      console.error("Track not found on LastFM:", track);
+      return;
+    }
 
     const lastScrobbledTrack = await this._getLastScrobbledTrack(handle);
-    if (
-      lastScrobbledTrack &&
-      lastScrobbledTrack.artist["#text"].toLowerCase() ===
-        track.artist.toLowerCase() &&
-      lastScrobbledTrack.name.toLowerCase() === track.title.toLowerCase()
-    ) {
+    if (lastScrobbledTrack && lastScrobbledTrack.url === lastFMTrack.url) {
       console.log("Track already scrobbled for user:", handle);
       return;
     }
@@ -126,6 +126,27 @@ class LastFMClient extends ClientService {
         handle,
         error,
       );
+    }
+  }
+
+  async _searchTrack(track) {
+    const api_key = process.env.LASTFM_API_KEY;
+    const api_sig = this._generateApiSignature({
+      api_key,
+      method: "track.search",
+      track: track.title,
+      artist: track.artist,
+      limit: 1,
+    });
+
+    try {
+      const response = await axios.get(
+        `https://ws.audioscrobbler.com/2.0/?method=track.search&api_key=${api_key}&track=${track.title}&artist=${track.artist}&api_sig=${api_sig}&limit=1&format=json`,
+      );
+
+      return response.data.results.trackmatches.track[0];
+    } catch (error) {
+      console.error("Error searching track:", track, error);
     }
   }
 
