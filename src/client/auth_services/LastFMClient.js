@@ -46,15 +46,17 @@ class LastFMClient extends ClientService {
   }
 
   async scrobbleTrackForUser(handle, track) {
-    const { sessionKey } = await AccountModelService.getLastFMToken(handle);
-    if (!sessionKey) {
+    console.log("Scrobbling track for user:", handle);
+    const { lastFMToken } = await AccountModelService.getLastFMToken(handle);
+    if (!lastFMToken) {
+      console.error("No LastFM token found for user:", handle);
       return;
     }
 
     const api_key = process.env.LASTFM_API_KEY;
     const api_sig = this._generateApiSignature({
       api_key,
-      sk: sessionKey,
+      sk: lastFMToken,
       method: "track.scrobble",
       artist: track.artist,
       track: track.title,
@@ -63,7 +65,7 @@ class LastFMClient extends ClientService {
 
     try {
       await axios.post(
-        `https://ws.audioscrobbler.com/2.0/?method=track.scrobble&api_key=${api_key}&sk=${sessionKey}&api_sig=${api_sig}&format=json`,
+        `https://ws.audioscrobbler.com/2.0/?method=track.scrobble&api_key=${api_key}&sk=${lastFMToken}&api_sig=${api_sig}&format=json`,
         this._buildQueryString({
           artist: track.artist,
           track: track.title,
