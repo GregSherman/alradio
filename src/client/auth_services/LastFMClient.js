@@ -50,6 +50,18 @@ class LastFMClient extends ClientService {
       console.error("Invalid track data:", track);
       return;
     }
+
+    const lastScrobbledTrack = await this._getLastScrobbledTrack(handle);
+    console.log("Last scrobbled track:", lastScrobbledTrack);
+    if (
+      lastScrobbledTrack &&
+      lastScrobbledTrack.artist["#text"] === track.artist.toLowerCase() &&
+      lastScrobbledTrack.name === track.title.toLowerCase()
+    ) {
+      console.log("Track already scrobbled for user:", handle);
+      return;
+    }
+
     console.log("Scrobbling track for user:", handle);
     const { lastFMToken } = await AccountModelService.getLastFMToken(handle);
     if (!lastFMToken) {
@@ -85,6 +97,36 @@ class LastFMClient extends ClientService {
     }
 
     console.log("Scrobbled track for user:", handle);
+  }
+
+  async _getLastScrobbledTrack(handle) {
+    const { lastFMToken } = await AccountModelService.getLastFMToken(handle);
+    if (!lastFMToken) {
+      console.error("No LastFM token found for user:", handle);
+      return;
+    }
+
+    const api_key = process.env.LASTFM_API_KEY;
+    const api_sig = this._generateApiSignature({
+      api_key,
+      sk: lastFMToken,
+      method: "user.getRecentTracks",
+      limit: 1,
+    });
+
+    try {
+      const response = await axios.get(
+        `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&api_key=${api_key}&sk=${lastFMToken}&api_sig=${api_sig}&limit=1&format=json`,
+      );
+
+      return response.data.recenttracks.track[0];
+    } catch (error) {
+      console.error(
+        "Error getting last scrobbled track for user:",
+        handle,
+        error,
+      );
+    }
   }
 
   _generateApiSignature(params) {

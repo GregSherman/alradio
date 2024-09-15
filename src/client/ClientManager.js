@@ -29,6 +29,7 @@ class ClientManager {
       );
     }, 30000);
 
+    clearTimeout(this._listeners.get(res.handle)?.timeout);
     this._listeners.set(res.handle, {
       currentSongId: SongController.currentSongMetadata.trackId,
       timeout,
@@ -47,8 +48,6 @@ class ClientManager {
   changeCurrentSongForClients(metadata) {
     for (const handle of this._listeners.keys()) {
       const listener = this._listeners.get(handle);
-      if (!listener) continue;
-
       clearTimeout(listener.timeout);
       if (!metadata?.trackId) continue;
 
