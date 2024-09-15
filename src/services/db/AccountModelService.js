@@ -122,12 +122,12 @@ class AccountModelService {
   }
 
   async _incrementListenersPlayCount() {
-    ClientManager._listeners.keys().forEach(async (handle) => {
-      Account.updateOne(
+    for (const handle of ClientManager._listeners.keys()) {
+      await Account.updateOne(
         { handle },
         { $inc: { numberOfSongsListened: 1 } },
       ).exec();
-    });
+    }
   }
 
   async _forceAllUsersOffline() {

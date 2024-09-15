@@ -54,7 +54,8 @@ class LastFMClient extends ClientService {
     const lastScrobbledTrack = await this._getLastScrobbledTrack(handle);
     if (
       lastScrobbledTrack &&
-      lastScrobbledTrack.artist["#text"].toLowerCase() === track.artist.toLowerCase() &&
+      lastScrobbledTrack.artist["#text"].toLowerCase() ===
+        track.artist.toLowerCase() &&
       lastScrobbledTrack.name.toLowerCase() === track.title.toLowerCase()
     ) {
       console.log("Track already scrobbled for user:", handle);
