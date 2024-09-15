@@ -3,6 +3,7 @@ import StreamClient from "../client/StreamClient.js";
 import SongClient from "../client/SongClient.js";
 import AccountClient from "../client/AccountClient.js";
 import SpotifyClient from "../client/auth_services/SpotifyClient.js";
+import LastFMClient from "../client/auth_services/LastFMClient.js";
 
 const router = Router();
 
@@ -47,6 +48,9 @@ router.post("/auth/spotify/add", (req, res) =>
 );
 router.post("/auth/spotify/unlink", (req, res) =>
   SpotifyClient.removeAuthorization(req, res),
+);
+router.get("/auth/lastfm/callback", (req, res) =>
+  LastFMClient.authorize(req, res),
 );
 
 // Admin Routes

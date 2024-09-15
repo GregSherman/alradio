@@ -29,6 +29,8 @@ class AccountModelService {
         location: 1,
         numberOfSongsListened: 1,
         role: 1,
+
+        lastFMUsername: 1,
         spotifyUserId: 1,
 
         customizationPreferences: 1,
@@ -56,6 +58,8 @@ class AccountModelService {
         location: 1,
         numberOfSongsListened: 1,
         role: 1,
+
+        lastFMUsername: 1,
         spotifyUserId: 1,
       },
     )
@@ -139,6 +143,35 @@ class AccountModelService {
     return PERMISSION_MAP[permission].includes(user.role);
   }
 
+  // LastFM
+  async addLastFMToken(handle, token) {
+    return Account.updateOne(
+      { handle },
+      { $set: { lastFMToken: token } },
+    ).exec();
+  }
+
+  async addLastFMUsername(handle, username) {
+    return Account.updateOne(
+      { handle },
+      { $set: { lastFMUsername: username } },
+    ).exec();
+  }
+
+  async getLastFMUsername(handle) {
+    const user = await Account.findOne(
+      { handle },
+      { lastFMUsername: 1 },
+    ).exec();
+    return user.lastFMUsername;
+  }
+
+  async getLastFMToken(handle) {
+    const user = await Account.findOne({ handle }, { lastFMToken: 1 }).exec();
+    return user.lastFMToken;
+  }
+
+  // Spotify
   async addSpotifyTokens(handle, token, refreshToken) {
     return Account.updateOne(
       { handle },

@@ -18,6 +18,11 @@ const AccountSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   role: { type: String, default: "user" },
 
+  // LastFM
+  lastFMUsername: { type: String, default: "" },
+  lastFMToken: { type: String, default: "" },
+
+  // Spotify
   spotifyUserId: { type: String, default: "" },
   spotifyAccessToken: { type: String, default: "" },
   spotifyRefreshToken: { type: String, default: "" },
