@@ -1,9 +1,11 @@
 import AccountModelService from "../services/db/AccountModelService.js";
 import LastFMClient from "./auth_services/LastFMClient.js";
 import SongController from "../controllers/songController.js";
+import { EventEmitter } from "events";
 
-class ClientManager {
+class ClientManager extends EventEmitter {
   constructor() {
+    super();
     this._clients = new Set();
     this._listeners = new Map();
   }
@@ -30,11 +32,9 @@ class ClientManager {
     }, 30000);
 
     clearTimeout(this._listeners.get(res.handle)?.timeout);
-    this._listeners.set(res.handle, {
-      currentSongId: SongController.currentSongMetadata.trackId,
-      timeout,
-    });
+    this._listeners.set(res.handle, { timeout });
     await AccountModelService.updateUserOnlineStatus(res.handle, true);
+    this.emit("clientConnected");
   }
 
   async removeClient(res) {
@@ -43,6 +43,7 @@ class ClientManager {
     clearTimeout(this._listeners.get(res.handle)?.timeout);
     this._listeners.delete(res.handle);
     await AccountModelService.updateUserOnlineStatus(res.handle, false);
+    this.emit("clientDisconnected");
   }
 
   changeCurrentSongForClients(metadata) {

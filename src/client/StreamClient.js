@@ -31,24 +31,45 @@ class StreamClient extends ClientService {
     res.handle = handle;
 
     ClientManager.addClient(res);
-    this.emit("clientConnected");
   }
 
-  getListeners(req, res) {
-    const listeners = Array.from(ClientManager._listeners.keys());
-    const loggedInListeners = listeners.filter(
-      (listener) => !listener.startsWith("anonymous-listener"),
-    );
-    const anonListeners = listeners.filter((listener) =>
-      listener.startsWith("anonymous-listener"),
-    );
-    res.json({
-      count: {
-        total: listeners.length,
-        loggedIn: loggedInListeners.length,
-        anonymous: anonListeners.length,
-      },
-      list: loggedInListeners,
+  async getListeners(req, res) {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const sendListenersData = () => {
+      const listeners = Array.from(ClientManager._listeners.keys());
+      const loggedInListeners = listeners.filter(
+        (listener) => !listener.startsWith("anonymous-listener"),
+      );
+      const anonListeners = listeners.filter((listener) =>
+        listener.startsWith("anonymous-listener"),
+      );
+
+      const listenerData = {
+        count: {
+          total: listeners.length,
+          loggedIn: loggedInListeners.length,
+          anonymous: anonListeners.length,
+        },
+        list: loggedInListeners,
+      };
+      res.write(`data: ${JSON.stringify(listenerData)}\n\n`);
+    };
+
+    sendListenersData();
+    const clientConnectedListener = () => {
+      sendListenersData();
+    };
+
+    ClientManager.on("clientConnected", clientConnectedListener);
+    ClientManager.on("clientDisconnected", clientConnectedListener);
+
+    req.on("close", () => {
+      ClientManager.off("clientConnected", clientConnectedListener);
+      ClientManager.off("clientDisconnected", clientConnectedListener);
+      res.end();
     });
   }
 }
