@@ -32,15 +32,15 @@ class ClientService extends EventEmitter {
 
   _clientifyMetadata(metadata) {
     return {
-      trackId: metadata.trackId,
-      title: metadata.title,
-      artist: metadata.artist,
-      album: metadata.album,
-      urlForPlatform: metadata.urlForPlatform,
-      artUrl: metadata.artUrl,
-      userSubmittedId: metadata.userSubmittedId,
-      likes: metadata.likes,
-      datePlayed: metadata.datePlayed,
+      trackId: metadata?.trackId,
+      title: metadata?.title,
+      artist: metadata?.artist,
+      album: metadata?.album,
+      urlForPlatform: metadata?.urlForPlatform,
+      artUrl: metadata?.artUrl,
+      userSubmittedId: metadata?.userSubmittedId,
+      likes: metadata?.likes,
+      datePlayed: metadata?.datePlayed,
     };
   }
 }

@@ -8,35 +8,87 @@ import AccountModelService from "../services/db/AccountModelService.js";
 
 class SongClient extends ClientService {
   async getCurrentSongMetadata(req, res) {
-    const metadata = this._clientifyMetadata(
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const initialMetadata = this._clientifyMetadata(
       SongController.currentSongMetadata,
     );
-    res.json(metadata);
+    res.write(`data: ${JSON.stringify(initialMetadata)}\n\n`);
+
+    const songChangedListener = (newMetadata) => {
+      const clientMetadata = this._clientifyMetadata(newMetadata);
+      res.write(`data: ${JSON.stringify(clientMetadata)}\n\n`);
+    };
+
+    SongController.on("songStarted", songChangedListener);
+    SongController.on("songEnded", songChangedListener);
+    req.on("close", () => {
+      SongController.off("songStarted", songChangedListener);
+      SongController.on("songEnded", songChangedListener);
+      res.end();
+    });
   }
 
   async getSongHistory(req, res) {
-    const songHistory =
-      await HistoryModelService.fetchMostRecentlyPlayedTracks();
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
-    // Do not send the current song in the history
-    const currentTrackId = SongController.currentSongMetadata?.trackId;
-    if (songHistory.length && songHistory[0].trackId === currentTrackId) {
-      songHistory.shift();
-    }
+    const sendSongHistory = async () => {
+      const songHistory =
+        await HistoryModelService.fetchMostRecentlyPlayedTracks();
 
-    const clientifiedHistory = songHistory.map((song) =>
-      this._clientifyMetadata(song),
-    );
-    res.json(clientifiedHistory);
+      // Do not send the current song in the history
+      const currentTrackId = SongController.currentSongMetadata?.trackId;
+      if (songHistory.length && songHistory[0].trackId === currentTrackId) {
+        songHistory.shift();
+      }
+
+      const clientifiedHistory = songHistory.map((song) =>
+        this._clientifyMetadata(song),
+      );
+      res.write(`data: ${JSON.stringify(clientifiedHistory)}\n\n`);
+    };
+
+    await sendSongHistory();
+
+    const songEndedListener = async () => {
+      await sendSongHistory();
+    };
+
+    SongController.on("songEnded", songEndedListener);
+    req.on("close", () => {
+      SongController.off("songEnded", songEndedListener);
+      res.end();
+    });
   }
 
   async getNextSong(req, res) {
-    const nextSongMetadata = QueueService.getNextQueuedSongMetadata();
-    if (!nextSongMetadata) {
-      res.json({ success: false, message: "No songs in queue." });
-      return;
-    }
-    res.json(this._clientifyMetadata(nextSongMetadata));
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const sendNextSongData = () => {
+      const nextSongMetadata = this._clientifyMetadata(
+        QueueService.getNextQueuedSongMetadata(),
+      );
+      res.write(`data: ${JSON.stringify(nextSongMetadata)}\n\n`);
+    };
+
+    sendNextSongData();
+    const songQueuedListener = () => {
+      sendNextSongData();
+    };
+
+    QueueService.on("songQueued", songQueuedListener);
+    SongController.on("songStarted", songQueuedListener);
+    req.on("close", () => {
+      QueueService.off("songQueued", songQueuedListener);
+      SongController.off("songStarted", songQueuedListener);
+      res.end();
+    });
   }
 
   async _handleSearchQuerySubmit(req, res, query) {
