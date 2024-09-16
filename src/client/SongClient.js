@@ -26,7 +26,7 @@ class SongClient extends ClientService {
     SongController.on("songEnded", songChangedListener);
     req.on("close", () => {
       SongController.off("songStarted", songChangedListener);
-      SongController.on("songEnded", songChangedListener);
+      SongController.off("songEnded", songChangedListener);
       res.end();
     });
   }

@@ -7,6 +7,9 @@ import LastFMClient from "../client/auth_services/LastFMClient.js";
 
 const router = Router();
 
+// Up Status
+router.get("/status", (req, res) => res.json());
+
 // Stream Routes
 router.get("/stream", (req, res) => StreamClient.addClientToStream(req, res));
 router.get("/listeners", (req, res) => StreamClient.getListeners(req, res));
