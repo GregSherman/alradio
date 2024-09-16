@@ -4,6 +4,13 @@ import ClientService from "../ClientService.js";
 import AccountModelService from "../../services/db/AccountModelService.js";
 
 class LastFMClient extends ClientService {
+  constructor() {
+    super();
+    this._api_key = process.env.LASTFM_API_KEY;
+    this._api_secret = process.env.LASTFM_API_SECRET;
+    this._redirect_url = process.env.CLIENT_URL;
+  }
+
   async authorize(req, res) {
     const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
@@ -22,7 +29,7 @@ class LastFMClient extends ClientService {
       const username = await this._fetchLastFMUsername(sessionKey);
       await AccountModelService.addLastFMUsername(authHandle, username);
 
-      res.redirect(302, `${process.env.CLIENT_URL}`);
+      res.redirect(302, `${this._redirect_url}`);
     } catch (error) {
       console.error("Error authorizing LastFM:", error);
       res.status(500).json({ message: "Error authorizing LastFM" });
@@ -31,7 +38,7 @@ class LastFMClient extends ClientService {
 
   // session key lasts forever
   async _getSessionKey(token) {
-    const api_key = process.env.LASTFM_API_KEY;
+    const api_key = this._api_key;
     const api_sig = this._generateApiSignature({
       api_key,
       token,
@@ -68,7 +75,7 @@ class LastFMClient extends ClientService {
       return;
     }
 
-    const api_key = process.env.LASTFM_API_KEY;
+    const api_key = this._api_key;
     const api_sig = this._generateApiSignature({
       api_key,
       sk: lastFMToken,
@@ -105,7 +112,7 @@ class LastFMClient extends ClientService {
       return;
     }
 
-    const api_key = process.env.LASTFM_API_KEY;
+    const api_key = this._api_key;
     const api_sig = this._generateApiSignature({
       api_key,
       sk: lastFMToken,
@@ -129,7 +136,7 @@ class LastFMClient extends ClientService {
   }
 
   async _searchTrack(track) {
-    const api_key = process.env.LASTFM_API_KEY;
+    const api_key = this._api_key;
     const api_sig = this._generateApiSignature({
       api_key,
       method: "track.search",
@@ -156,13 +163,12 @@ class LastFMClient extends ClientService {
     sortedKeys.forEach((key) => {
       signatureString += key + params[key];
     });
-    signatureString += process.env.LASTFM_API_SECRET;
+    signatureString += this._api_secret;
 
     return crypto.createHash("md5").update(signatureString).digest("hex");
   }
 
   _buildQueryString(params) {
-    // Convert the parameters object into a query string
     return Object.keys(params)
       .map(
         (key) =>
@@ -172,7 +178,7 @@ class LastFMClient extends ClientService {
   }
 
   async _fetchLastFMUsername(sessionKey) {
-    const api_key = process.env.LASTFM_API_KEY;
+    const api_key = this._api_key;
     const api_sig = this._generateApiSignature({
       api_key,
       sk: sessionKey,

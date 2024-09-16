@@ -3,6 +3,14 @@ import AccountModelService from "../../services/db/AccountModelService.js";
 import ClientService from "../ClientService.js";
 
 class SpotifyClient extends ClientService {
+  constructor() {
+    super();
+    this._client_id = process.env.SPOTIFY_CLIENT_ID;
+    this._client_secret = process.env.SPOTIFY_CLIENT_SECRET;
+    this._client_url = process.env.CLIENT_URL;
+    this._redirect_base_url = process.env.REDIRECT_BASE_URL;
+  }
+
   async authorize(req, res) {
     const authHandle = this.authenticateStrict(req, res);
     if (!authHandle) {
@@ -31,7 +39,7 @@ class SpotifyClient extends ClientService {
         spotifyDisplayName,
       );
 
-      res.redirect(302, `${process.env.CLIENT_URL}`);
+      res.redirect(302, `${this._client_url}`);
     } catch (error) {
       console.error("Error authorizing Spotify:", error);
       res.status(500).json({ message: "Error authorizing Spotify" });
@@ -45,8 +53,7 @@ class SpotifyClient extends ClientService {
     }
 
     try {
-      await AccountModelService.addSpotifyTokens(authHandle, null, null);
-      await AccountModelService.addSpotifyUserId(authHandle, null);
+      await this._removeTokens(authHandle);
 
       res.status(200).json({ message: "Spotify authorization removed" });
     } catch (error) {
@@ -107,9 +114,9 @@ class SpotifyClient extends ClientService {
       new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: `${process.env.REDIRECT_BASE_URL}/auth/spotify/callback`,
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET,
+        redirect_uri: `${this._redirect_base_url}/auth/spotify/callback`,
+        client_id: this._client_id,
+        client_secret: this._client_secret,
       }),
       {
         headers: {
@@ -124,6 +131,43 @@ class SpotifyClient extends ClientService {
     };
   }
 
+  async _getNewAccessToken(authHandle, refreshToken) {
+    try {
+      const tokenResponse = await axios.post(
+        "https://accounts.spotify.com/api/token",
+        new URLSearchParams({
+          grant_type: "refresh_token",
+          refresh_token: refreshToken,
+          client_id: this._client_id,
+          client_secret: this._client_secret,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        },
+      );
+      const accessToken = tokenResponse.data.access_token;
+      await AccountModelService.addSpotifyTokens(
+        authHandle,
+        accessToken,
+        tokenResponse.data.refresh_token || refreshToken,
+      );
+      return accessToken;
+    } catch (error) {
+      if (error.response?.status === 400) {
+        // access token revoked
+        await this._removeTokens(authHandle);
+      }
+    }
+  }
+
+  async _removeTokens(authHandle) {
+    await AccountModelService.addSpotifyTokens(authHandle, null, null);
+    await AccountModelService.addSpotifyUserId(authHandle, null);
+    await AccountModelService.addSpotifyQuickAddPlaylistId(authHandle, null);
+  }
+
   async _refreshAccessTokenIfExpired(accessToken, refreshToken, authHandle) {
     try {
       await axios.get("https://api.spotify.com/v1/me", {
@@ -132,34 +176,9 @@ class SpotifyClient extends ClientService {
       return accessToken;
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        const tokenResponse = await axios.post(
-          "https://accounts.spotify.com/api/token",
-          new URLSearchParams({
-            grant_type: "refresh_token",
-            refresh_token: refreshToken,
-            client_id: process.env.SPOTIFY_CLIENT_ID,
-            client_secret: process.env.SPOTIFY_CLIENT_SECRET,
-          }),
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-          },
-        );
-        accessToken = tokenResponse.data.access_token;
-        await AccountModelService.addSpotifyTokens(
-          authHandle,
-          accessToken,
-          tokenResponse.data.refresh_token || refreshToken,
-        );
-        return accessToken;
+        return await this._getNewAccessToken(authHandle, refreshToken);
       } else if (error.response && error.response.status === 403) {
-        await AccountModelService.addSpotifyTokens(authHandle, null, null);
-        await AccountModelService.addSpotifyUserId(authHandle, null);
-        await AccountModelService.addSpotifyQuickAddPlaylistId(
-          authHandle,
-          null,
-        );
+        await this._removeTokens(authHandle);
         throw new Error("Spotify authorization revoked");
       }
       throw error;
