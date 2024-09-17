@@ -34,6 +34,12 @@ class HistoryModelService {
     );
   }
 
+  async isLastPage(page, limit = 10, userSubmittedId = null) {
+    const query = userSubmittedId ? { userSubmittedId } : {};
+    const totalTracks = await History.countDocuments(query);
+    return page * limit >= totalTracks;
+  }
+
   async isTrackPlayedInLastHours(trackId, hours = 3) {
     const recentlyPlayed = await this.fetchRecentlyPlayedTracks(hours);
     return recentlyPlayed.some((track) => track.trackId === trackId);

@@ -36,20 +36,35 @@ class SongClient extends ClientService {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
+    let { page } = req.params;
+    page = parseInt(page, 10);
+    if (isNaN(page) || page < 1) {
+      page = 1;
+    }
+
     const sendSongHistory = async () => {
       const songHistory =
-        await HistoryModelService.fetchMostRecentlyPlayedTracks();
+        await HistoryModelService.fetchMostRecentlyPlayedTracks(page);
+      const isLastPage = await HistoryModelService.isLastPage(page);
 
       // Do not send the current song in the history
       const currentTrackId = SongController.currentSongMetadata?.trackId;
-      if (songHistory.length && songHistory[0].trackId === currentTrackId) {
+      if (
+        page === 1 &&
+        songHistory.length &&
+        songHistory[0].trackId === currentTrackId
+      ) {
         songHistory.shift();
       }
 
       const clientifiedHistory = songHistory.map((song) =>
         this._clientifyMetadata(song),
       );
-      res.write(`data: ${JSON.stringify(clientifiedHistory)}\n\n`);
+      const response = {
+        tracks: clientifiedHistory,
+        isLastPage,
+      };
+      res.write(`data: ${JSON.stringify(response)}\n\n`);
     };
 
     await sendSongHistory();

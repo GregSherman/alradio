@@ -18,7 +18,9 @@ router.get("/listeners", (req, res) => StreamClient.getListeners(req, res));
 router.get("/song/current", (req, res) =>
   SongClient.getCurrentSongMetadata(req, res),
 );
-router.get("/song/history", (req, res) => SongClient.getSongHistory(req, res));
+router.get("/song/history/:page", (req, res) =>
+  SongClient.getSongHistory(req, res),
+);
 router.get("/song/next", (req, res) => SongClient.getNextSong(req, res));
 router.post("/song/submit", (req, res) =>
   SongClient.submitSongRequest(req, res),
