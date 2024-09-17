@@ -24,7 +24,17 @@ class SongClient extends ClientService {
 
     SongController.on("songStarted", songChangedListener);
     SongController.on("songEnded", songChangedListener);
+    console.log(
+      "SongController Listener Count:",
+      SongController.listenerCount("songStarted"),
+    );
     req.on("close", () => {
+      SongController.off("songStarted", songChangedListener);
+      SongController.off("songEnded", songChangedListener);
+      res.end();
+    });
+
+    req.on("error", () => {
       SongController.off("songStarted", songChangedListener);
       SongController.off("songEnded", songChangedListener);
       res.end();
@@ -78,6 +88,11 @@ class SongClient extends ClientService {
       SongController.off("songEnded", songEndedListener);
       res.end();
     });
+
+    req.on("error", () => {
+      SongController.off("songEnded", songEndedListener);
+      res.end();
+    });
   }
 
   async getNextSong(req, res) {
@@ -100,6 +115,12 @@ class SongClient extends ClientService {
     QueueService.on("songQueued", songQueuedListener);
     SongController.on("songStarted", songQueuedListener);
     req.on("close", () => {
+      QueueService.off("songQueued", songQueuedListener);
+      SongController.off("songStarted", songQueuedListener);
+      res.end();
+    });
+
+    req.on("error", () => {
       QueueService.off("songQueued", songQueuedListener);
       SongController.off("songStarted", songQueuedListener);
       res.end();

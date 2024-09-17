@@ -30,6 +30,7 @@ class StreamClient extends ClientService {
 
     res.handle = handle;
 
+    console.log("Adding client to stream:", handle);
     ClientManager.addClient(res);
   }
 
@@ -65,8 +66,17 @@ class StreamClient extends ClientService {
 
     ClientManager.on("clientConnected", clientConnectedListener);
     ClientManager.on("clientDisconnected", clientConnectedListener);
-
+    console.log(
+      "clientConnected listener count:",
+      ClientManager.listenerCount("clientConnected"),
+    );
     req.on("close", () => {
+      ClientManager.off("clientConnected", clientConnectedListener);
+      ClientManager.off("clientDisconnected", clientConnectedListener);
+      res.end();
+    });
+
+    req.on("error", () => {
       ClientManager.off("clientConnected", clientConnectedListener);
       ClientManager.off("clientDisconnected", clientConnectedListener);
       res.end();
