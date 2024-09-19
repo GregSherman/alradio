@@ -8,7 +8,7 @@ class SpotifyClient extends ClientService {
     this._client_id = process.env.SPOTIFY_CLIENT_ID;
     this._client_secret = process.env.SPOTIFY_CLIENT_SECRET;
     this._client_url = process.env.CLIENT_URL;
-    this._redirect_base_url = process.env.REDIRECT_BASE_URL;
+    this._api_base_url = process.env.API_BASE_URL;
   }
 
   async authorize(req, res) {
@@ -114,7 +114,7 @@ class SpotifyClient extends ClientService {
       new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: `${this._redirect_base_url}/auth/spotify/callback`,
+        redirect_uri: `${this._api_base_url}/auth/spotify/callback`,
         client_id: this._client_id,
         client_secret: this._client_secret,
       }),

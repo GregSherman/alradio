@@ -8,7 +8,7 @@
     "setup-audio": "mkdir -p ./audio && rm -rf ./audio/*",
     "start:local": "npm run setup-audio && node --expose-gc --env-file=.env src/index.js",
     "start": "npm run setup-audio && node --expose-gc --optimize_for_size --max_old_space_size=460 src/index.js",
-    "mongo:local": "mkdir -p db && mongod --dbpath db --port 28017",
+    "mongo": "mkdir -p db && mongod --dbpath db --port 28017",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,css,md}\""
