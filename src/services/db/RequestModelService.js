@@ -1,5 +1,6 @@
 import Request from "../../models/Request.js";
 import History from "../../models/History.js";
+import { log } from "../../utils/logger.js";
 
 class RequestModelService {
   async initialize() {
@@ -10,7 +11,11 @@ class RequestModelService {
   }
 
   async addRequest(trackId, userSubmittedId) {
-    console.log("Adding request to user queue:", trackId, userSubmittedId);
+    log(
+      "info",
+      `Adding request to user queue: ${trackId} ${userSubmittedId}`,
+      this.constructor.name,
+    );
     return Request.create({ trackId, userSubmittedId });
   }
 

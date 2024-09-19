@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import RequestModelService from "./db/RequestModelService.js";
+import { log } from "../utils/logger.js";
 class QueueService extends EventEmitter {
   constructor() {
     super();
@@ -18,7 +19,11 @@ class QueueService extends EventEmitter {
   addToSuggestionQueue(trackId) {
     if (this._autoSuggestionQueue.length < 5) {
       this._autoSuggestionQueue.push({ trackId, userSubmittedId: null });
-      console.log("Added trackId", trackId, "to suggestion queue");
+      log(
+        "info",
+        `Added trackId ${trackId} to suggestion queue`,
+        this.constructor.name,
+      );
       return true;
     }
     return false;
@@ -37,12 +42,10 @@ class QueueService extends EventEmitter {
   addToAudioQueue(audioFile) {
     this._audioQueue.push(audioFile);
     this.emit("songQueued");
-    console.log(
-      "Added audio file",
-      audioFile.metadata?.title,
-      " - ",
-      audioFile.metadata?.artist,
-      "to audio queue",
+    log(
+      "info",
+      `Added audio file ${audioFile.metadata.title} - ${audioFile.metadata.artist} to audio queue`,
+      this.constructor.name,
     );
   }
 

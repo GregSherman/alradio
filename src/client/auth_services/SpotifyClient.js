@@ -1,6 +1,7 @@
 import axios from "axios";
 import AccountModelService from "../../services/db/AccountModelService.js";
 import ClientService from "../ClientService.js";
+import { log } from "../../utils/logger.js";
 
 class SpotifyClient extends ClientService {
   constructor() {
@@ -41,7 +42,11 @@ class SpotifyClient extends ClientService {
 
       res.redirect(302, `${this._client_url}`);
     } catch (error) {
-      console.error("Error authorizing Spotify:", error);
+      log(
+        "error",
+        `Error authorizing Spotify: ${error.message}`,
+        this.constructor.name,
+      );
       res.status(500).json({ message: "Error authorizing Spotify" });
     }
   }
@@ -57,7 +62,11 @@ class SpotifyClient extends ClientService {
 
       res.status(200).json({ message: "Spotify authorization removed" });
     } catch (error) {
-      console.error("Error removing Spotify authorization:", error);
+      log(
+        "error",
+        "Error removing Spotify authorization",
+        this.constructor.name,
+      );
       res.status(500).json({ message: "Error removing Spotify authorization" });
     }
   }
@@ -103,7 +112,11 @@ class SpotifyClient extends ClientService {
 
       res.status(200).json({ message: "Track added to your playlist!" });
     } catch (error) {
-      console.error("Error adding song to playlist:", error);
+      log(
+        "error",
+        `Error adding song to playlist: ${error.message}`,
+        this.constructor.name,
+      );
       res.status(500).json({ message: "Error adding song to playlist" });
     }
   }

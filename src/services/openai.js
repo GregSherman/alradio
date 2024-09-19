@@ -2,6 +2,7 @@ import axios from "axios";
 import fs from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { log } from "../utils/logger.js";
 
 class OpenAiService {
   constructor() {
@@ -109,7 +110,7 @@ class OpenAiService {
   }
 
   async textToSpeech(text) {
-    console.log("Converting text to speech:", text);
+    log("info", `Converting text to speech: ${text}`, this.constructor.name);
     try {
       const response = await axios.post(
         `${this._baseUrl}/audio/speech`,
@@ -135,7 +136,11 @@ class OpenAiService {
         const execAsync = promisify(exec);
         await execAsync(command);
       } catch (error) {
-        console.error("Failed to adjust audio volume:", error);
+        log(
+          "error",
+          `Failed to adjust audio volume: ${error}`,
+          this.constructor.name,
+        );
       }
 
       fs.unlinkSync(tempAudioPath);

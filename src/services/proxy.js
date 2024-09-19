@@ -1,5 +1,6 @@
 import axios from "axios";
 import { NoProxyError } from "../errors.js";
+import { log } from "../utils/logger.js";
 
 class ProxyService {
   constructor() {
@@ -16,7 +17,7 @@ class ProxyService {
       this._proxyList.pop();
       this._proxyList = proxyList.map((proxy) => this._parseProxy(proxy));
     } catch (error) {
-      console.error("Failed to refresh proxy list.");
+      log("error", "Failed to refresh proxy list.", this.constructor.name);
     }
   }
 
@@ -45,7 +46,11 @@ class ProxyService {
   }
 
   async _testProxy(proxy) {
-    console.log("Testing proxy:", proxy.host, proxy.port);
+    log(
+      "info",
+      `Testing proxy: ${proxy.host}:${proxy.port}`,
+      this.constructor.name,
+    );
     try {
       await axios.get("http://httpbin.org/ip", {
         proxy: {
@@ -54,10 +59,10 @@ class ProxyService {
         },
         timeout: 5000,
       });
-      console.log("Proxy test successful.");
+      log("info", "Proxy test successful.", this.constructor.name);
       return true;
     } catch (error) {
-      console.error("Failed proxy test:", error.message);
+      log("warn", "Proxy test failed.", this.constructor.name);
       this._markProxyBad(proxy);
       return false;
     }

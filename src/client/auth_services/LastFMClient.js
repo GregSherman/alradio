@@ -2,6 +2,7 @@ import axios from "axios";
 import crypto from "crypto";
 import ClientService from "../ClientService.js";
 import AccountModelService from "../../services/db/AccountModelService.js";
+import { log } from "../../utils/logger.js";
 
 class LastFMClient extends ClientService {
   constructor() {
@@ -31,7 +32,11 @@ class LastFMClient extends ClientService {
 
       res.redirect(302, `${this._redirect_url}`);
     } catch (error) {
-      console.error("Error authorizing LastFM:", error);
+      log(
+        "error",
+        `Error authorizing LastFM: ${error.message}`,
+        this.constructor.name,
+      );
       res.status(500).json({ message: "Error authorizing LastFM" });
     }
   }
@@ -61,17 +66,25 @@ class LastFMClient extends ClientService {
     if (!lastFMToken) {
       return;
     }
-    console.log("Scrobbling track for user:", handle);
+    log("info", `Scrobbling track for user: ${handle}`, this.constructor.name);
 
     const lastFMTrack = await this._searchTrack(track);
     if (!lastFMTrack) {
-      console.error("Track not found on LastFM:", track);
+      log(
+        "error",
+        `Track not found on LastFM: ${track.title} - ${track.artist}`,
+        this.constructor.name,
+      );
       return;
     }
 
     const lastScrobbledTrack = await this._getLastScrobbledTrack(handle);
     if (lastScrobbledTrack && lastScrobbledTrack.url === lastFMTrack.url) {
-      console.log("Track already scrobbled for user:", handle);
+      log(
+        "info",
+        `Track already scrobbled for user: ${handle}`,
+        this.constructor.name,
+      );
       return;
     }
 
@@ -95,20 +108,27 @@ class LastFMClient extends ClientService {
         }),
       );
     } catch (error) {
-      console.error("Error scrobbling track for user:", handle, error);
+      log(
+        "error",
+        `Error scrobbling track for user: ${handle}`,
+        this.constructor.name,
+      );
       if (error.response && error.response.status === 403) {
         await AccountModelService.addLastFMToken(handle, null);
         await AccountModelService.addLastFMUsername(handle, null);
       }
     }
-
-    console.log("Scrobbled track for user:", handle);
+    log("info", `Scrobbled track for user: ${handle}`, this.constructor.name);
   }
 
   async _getLastScrobbledTrack(handle) {
     const { lastFMToken } = await AccountModelService.getLastFMToken(handle);
     if (!lastFMToken) {
-      console.error("No LastFM token found for user:", handle);
+      log(
+        "error",
+        `No LastFM token found for user: ${handle}`,
+        this.constructor.name,
+      );
       return;
     }
 
@@ -127,10 +147,10 @@ class LastFMClient extends ClientService {
 
       return response.data.recenttracks.track[0];
     } catch (error) {
-      console.error(
-        "Error getting last scrobbled track for user:",
-        handle,
-        error,
+      log(
+        "error",
+        `Error getting last scrobbled track for user ${handle}: ${error.message}`,
+        this.constructor.name,
       );
     }
   }
@@ -152,7 +172,11 @@ class LastFMClient extends ClientService {
 
       return response.data.results.trackmatches.track[0];
     } catch (error) {
-      console.error("Error searching track:", track, error);
+      log(
+        "error",
+        `Error searching track: ${track.title} - ${track.artist}. ${error.message}`,
+        this.constructor.name,
+      );
     }
   }
 

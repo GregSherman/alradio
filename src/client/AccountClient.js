@@ -9,11 +9,16 @@ import leoProfanity from "leo-profanity";
 import emailValidator from "email-validator";
 import StreamClient from "./StreamClient.js";
 import ClientManager from "./ClientManager.js";
+import { log } from "../utils/logger.js";
 
 class AccountClient extends ClientService {
   async register(req, res) {
     let { handle, password, email, ...profileData } = req.body;
-    console.log("Attempting to register user with handle:", handle);
+    log(
+      "info",
+      `Attempting to register user with handle: ${handle}`,
+      this.constructor.name,
+    );
 
     if (!handle) {
       return res.status(400).json({ message: "Handle is required" });
@@ -83,15 +88,22 @@ class AccountClient extends ClientService {
       email,
       ...profileData,
     });
-
-    console.log("Registered user with handle:", handle);
+    log(
+      "info",
+      `Registered user with handle: ${handle}`,
+      this.constructor.name,
+    );
     res.status(201).json({ message: "User registered successfully" });
   }
 
   async login(req, res) {
     let { handle, password } = req.body;
     handle = handle.trim().toLowerCase();
-    console.log("Attempting to login user with handle:", handle);
+    log(
+      "info",
+      `Attempting to login user with handle: ${handle}`,
+      this.constructor.name,
+    );
 
     const passwordMatch = await AccountModelService.authorizeUser(
       handle,
@@ -125,7 +137,11 @@ class AccountClient extends ClientService {
       return;
     }
 
-    console.log("Logging out user with handle:", authHandle);
+    log(
+      "info",
+      `Logging out user with handle: ${authHandle}`,
+      this.constructor.name,
+    );
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.ENVIRONMENT === "prod",
@@ -225,7 +241,11 @@ class AccountClient extends ClientService {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    console.log("ADMIN skipping current song");
+    log(
+      "info",
+      `Admin ${authHandle} skipping current song`,
+      this.constructor.name,
+    );
     SongController.skipCurrentSong();
 
     res.json({ message: "Song skipped successfully" });
@@ -240,7 +260,11 @@ class AccountClient extends ClientService {
     if (!(await AccountModelService.isAdmin(authHandle))) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    console.log("ADMIN fetching suggestion queue");
+    log(
+      "info",
+      `Admin ${authHandle} fetching suggestion queue`,
+      this.constructor.name,
+    );
     res.json(QueueService.getSuggestionQueue());
   }
 
@@ -254,7 +278,11 @@ class AccountClient extends ClientService {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    console.log("ADMIN fetching user queue");
+    log(
+      "info",
+      `Admin ${authHandle} fetching user queue`,
+      this.constructor.name,
+    );
     res.json(await QueueService.getUserQueue());
   }
 
@@ -268,7 +296,11 @@ class AccountClient extends ClientService {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    console.log("ADMIN fetching audio queue");
+    log(
+      "info",
+      `Admin ${authHandle} fetching audio queue`,
+      this.constructor.name,
+    );
     res.json(QueueService.getAudioQueue());
   }
 
@@ -282,7 +314,11 @@ class AccountClient extends ClientService {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    console.log("ADMIN editing user queue");
+    log(
+      "info",
+      `Admin ${authHandle} editing user queue`,
+      this.constructor.name,
+    );
     await QueueService.editUserQueue(req.body);
     res.json({ message: "User queue updated successfully" });
   }
@@ -297,7 +333,11 @@ class AccountClient extends ClientService {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    console.log("ADMIN editing suggestion queue");
+    log(
+      "info",
+      `Admin ${authHandle} editing suggestion queue`,
+      this.constructor.name,
+    );
     QueueService.editSuggestionQueue(req.body);
     res.json({ message: "Suggestion queue updated successfully" });
   }
@@ -312,7 +352,11 @@ class AccountClient extends ClientService {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    console.log("ADMIN editing audio queue");
+    log(
+      "info",
+      `Admin ${authHandle} editing audio queue`,
+      this.constructor.name,
+    );
     QueueService.editAudioQueue(req.body);
     res.json({ message: "Audio queue updated successfully" });
   }

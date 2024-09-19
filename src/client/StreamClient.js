@@ -1,3 +1,4 @@
+import { log } from "../utils/logger.js";
 import ClientManager from "./ClientManager.js";
 import ClientService from "./ClientService.js";
 
@@ -29,8 +30,7 @@ class StreamClient extends ClientService {
     });
 
     res.handle = handle;
-
-    console.log("Adding client to stream:", handle);
+    log("info", `Adding client to stream: ${handle}`, this.constructor.name);
     ClientManager.addClient(res);
   }
 
@@ -66,10 +66,6 @@ class StreamClient extends ClientService {
 
     ClientManager.on("clientConnected", clientConnectedListener);
     ClientManager.on("clientDisconnected", clientConnectedListener);
-    console.log(
-      "clientConnected listener count:",
-      ClientManager.listenerCount("clientConnected"),
-    );
     req.on("close", () => {
       ClientManager.off("clientConnected", clientConnectedListener);
       ClientManager.off("clientDisconnected", clientConnectedListener);

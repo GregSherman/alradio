@@ -5,6 +5,7 @@ import HistoryModelService from "../services/db/HistoryModelService.js";
 import SongController from "../controllers/songController.js";
 import RequestModelService from "../services/db/RequestModelService.js";
 import AccountModelService from "../services/db/AccountModelService.js";
+import { log } from "../utils/logger.js";
 
 class SongClient extends ClientService {
   async getCurrentSongMetadata(req, res) {
@@ -24,10 +25,6 @@ class SongClient extends ClientService {
 
     SongController.on("songStarted", songChangedListener);
     SongController.on("songEnded", songChangedListener);
-    console.log(
-      "SongController Listener Count:",
-      SongController.listenerCount("songStarted"),
-    );
     req.on("close", () => {
       SongController.off("songStarted", songChangedListener);
       SongController.off("songEnded", songChangedListener);
@@ -138,7 +135,11 @@ class SongClient extends ClientService {
       tracks = tracks.map((track) => this._clientifyMetadata(track));
       res.json({ success: true, tracks });
     } catch (error) {
-      console.error("Error searching for track:", error);
+      log(
+        "error",
+        `Error searching for track: ${error.message}`,
+        this.constructor.name,
+      );
       res.status(500).json({ message: "Internal server error" });
     }
   }
@@ -193,7 +194,7 @@ class SongClient extends ClientService {
         success: false,
         message: "Maximum requests reached. Try again later.",
       });
-      console.log("User is rate limited");
+      log("info", `User ${authHandle} is rate limited`, this.constructor.name);
       return;
     }
 
@@ -204,7 +205,7 @@ class SongClient extends ClientService {
 
     if (await QueueService.isUserQueueFull()) {
       res.json({ success: false, message: "The queue is full." });
-      console.log("User queue is full");
+      log("info", `User submission queue is full`, this.constructor.name);
       return;
     }
 

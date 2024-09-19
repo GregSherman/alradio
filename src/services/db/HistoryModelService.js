@@ -1,9 +1,14 @@
 import History from "../../models/History.js";
 import TrackModelService from "./TrackModelService.js";
+import { log } from "../../utils/logger.js";
 
 class HistoryModelService {
   async addPlayedTrack(trackId, userSubmittedId = null) {
-    console.log("Adding played track to history:", trackId, userSubmittedId);
+    log(
+      "info",
+      `Adding played track to history: ${trackId} ${userSubmittedId}`,
+      this.constructor.name,
+    );
     return History.create({ trackId, userSubmittedId });
   }
 
