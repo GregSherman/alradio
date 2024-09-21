@@ -3,13 +3,17 @@ import { getContext } from "./asyncLocalStorage.js";
 import { nanoid } from "nanoid";
 import crypto from "crypto";
 
-// ANSI color codes
+// ANSI color codes (30-37)
 const ansiCodes = {
   reset: "\x1b[0m",
   red: "\x1b[31m",
-  gray: "\x1b[90m",
+  green: "\x1b[32m",
   yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
   white: "\x1b[37m",
+  gray: "\x1b[90m",
 };
 
 // Helper function to wrap text in ANSI color codes
@@ -23,42 +27,14 @@ const levelColors = {
   default: ansiCodes.white,
 };
 
-// Dynamic colors using ANSI hex codes for specific RGB colors
+// Dynamic colors mapped to available ANSI color codes (30-37)
 const dynamicColors = [
-  "\x1b[38;2;255;20;147m", // Deep Pink
-  "\x1b[38;2;255;0;255m", // Fuchsia
-  "\x1b[38;2;199;21;133m", // MediumVioletRed
-  "\x1b[38;2;255;215;0m", // Gold
-  "\x1b[38;2;218;112;214m", // Orchid
-  "\x1b[38;2;240;230;140m", // Khaki
-  "\x1b[38;2;138;43;226m", // BlueViolet
-  "\x1b[38;2;255;69;0m", // OrangeRed
-  "\x1b[38;2;0;255;255m", // Aqua
-  "\x1b[38;2;255;140;0m", // DarkOrange
-  "\x1b[38;2;127;255;0m", // Chartreuse
-  "\x1b[38;2;255;99;71m", // Tomato
-  "\x1b[38;2;186;85;211m", // MediumOrchid
-  "\x1b[38;2;230;230;250m", // Lavender
-  "\x1b[38;2;255;105;180m", // Hot Pink
-  "\x1b[38;2;139;0;139m", // DarkMagenta
-  "\x1b[38;2;0;250;154m", // MediumSpringGreen
-  "\x1b[38;2;176;224;230m", // PowderBlue
-  "\x1b[38;2;255;0;255m", // Magenta
-  "\x1b[38;2;106;90;205m", // SlateBlue
-  "\x1b[38;2;255;182;193m", // LightPink
-  "\x1b[38;2;153;50;204m", // DarkOrchid
-  "\x1b[38;2;64;224;208m", // Turquoise
-  "\x1b[38;2;255;69;71m", // Tomato
-  "\x1b[38;2;255;20;147m", // DeepPink
-  "\x1b[38;2;221;160;221m", // Plum
-  "\x1b[38;2;240;128;128m", // LightCoral
-  "\x1b[38;2;186;85;211m", // MediumOrchid
-  "\x1b[38;2;255;105;180m", // HotPink
-  "\x1b[38;2;224;255;255m", // LightCyan
-  "\x1b[38;2;255;140;0m", // DarkOrange
-  "\x1b[38;2;255;192;203m", // Pink
-  "\x1b[38;2;135;206;235m", // SkyBlue
-  "\x1b[38;2;255;182;193m", // LightPink
+  ansiCodes.red,
+  ansiCodes.green,
+  ansiCodes.yellow,
+  ansiCodes.blue,
+  ansiCodes.magenta,
+  ansiCodes.cyan,
 ];
 
 // Function to get color for a specific text using a hash
