@@ -77,9 +77,6 @@ class StreamClient extends ClientService {
     });
 
     req.on("error", () => {
-      ClientManager.off("clientConnected", clientConnectedListener);
-      ClientManager.off("clientDisconnected", clientConnectedListener);
-      res.end();
       log("info", "Listeners stream error", req.taskId, this.constructor.name);
     });
   }

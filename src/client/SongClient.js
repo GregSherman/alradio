@@ -40,9 +40,6 @@ class SongClient extends ClientService {
     });
 
     req.on("error", () => {
-      SongController.off("songStarted", songChangedListener);
-      SongController.off("songEnded", songChangedListener);
-      res.end();
       log(
         "info",
         "Song metadata stream error",
@@ -109,8 +106,6 @@ class SongClient extends ClientService {
     });
 
     req.on("error", () => {
-      SongController.off("songEnded", songEndedListener);
-      res.end();
       log(
         "info",
         "Song history stream error",
@@ -149,9 +144,6 @@ class SongClient extends ClientService {
     });
 
     req.on("error", () => {
-      QueueService.off("songQueued", songQueuedListener);
-      SongController.off("songStarted", songQueuedListener);
-      res.end();
       log("info", "Next song stream error", req.taskId, this.constructor.name);
     });
   }
