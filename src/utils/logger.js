@@ -4,7 +4,6 @@ import { nanoid } from "nanoid";
 import chalk from "chalk";
 import crypto from "crypto";
 
-// Define colors for log levels
 const levelColors = {
   error: chalk.red,
   info: chalk.gray,
@@ -12,7 +11,6 @@ const levelColors = {
   default: chalk.white,
 };
 
-// Define a list of dynamic colors
 const dynamicColors = [
   chalk.hex("#FF1493"), // Deep Pink
   chalk.hex("#FF00FF"), // Fuchsia
@@ -50,7 +48,6 @@ const dynamicColors = [
   chalk.hex("#FFB6C1"), // LightPink
 ];
 
-// Helper function to get color for text
 const getColorForText = (text) => {
   const hash = crypto.createHash("md5").update(text).digest("hex");
   const index = parseInt(hash, 16) % dynamicColors.length;
@@ -64,7 +61,7 @@ log4js.configure({
       type: "stdout",
       layout: {
         type: "pattern",
-        pattern: "%m", // Custom formatting in `log` function
+        pattern: "%m",
       },
     },
   },
@@ -75,62 +72,29 @@ log4js.configure({
 
 const logger = log4js.getLogger();
 
-// Helper function for formatting context info based on category
-const formatContext = (category, requestId, requestMethod, requestUrl) => {
-  if (category === "server-task") {
-    return `${category ? getColorForText(category)(`[${category}]`) : ""}`;
-  }
-
-  if (category === "request-task") {
-    const requestIdColored = requestId
-      ? getColorForText(requestId)(`[${requestId}]`)
-      : "";
-    const requestMethodColored = requestMethod
-      ? getColorForText(requestMethod)(`[${requestMethod}]`)
-      : "";
-    const requestUrlColored = requestUrl
-      ? getColorForText(requestUrl)(`[${requestUrl}]`)
-      : "";
-    return `${category ? getColorForText(category)(`[${category}]`) : ""} ${requestIdColored} ${requestMethodColored} ${requestUrlColored}`;
-  }
-
-  return `${category ? getColorForText(category)(`[${category}]`) : ""}`;
-};
-
-// Main log function
 const log = (level, message, ...args) => {
   const context = getContext();
-  const category = context.category || "";
-  const requestId = context.requestId || "";
-  const requestMethod = context.requestMethod || "";
-  const requestUrl = context.requestUrl || "";
+  const taskId = context.taskId || "";
 
-  // Get color for the log level
+  const taskIdColored = taskId ? getColorForText(taskId)(`[${taskId}]`) : "";
   const levelColor = levelColors[level] || levelColors.default;
 
-  // Format context info based on the category
-  const contextInfo = formatContext(
-    category,
-    requestId,
-    requestMethod,
-    requestUrl,
-  );
-
-  // Create args colored by dynamic colors
   const argsColored = args
     .map((arg) => {
+      if (arg === taskId) return;
       const color = getColorForText(arg);
       return color(`[${arg}]`);
     })
     .join(" ");
 
-  // Log the message with color
-  logger[level](
-    `${levelColor(`[${level.toUpperCase()}]`)} ${contextInfo} ${argsColored} ${chalk.white(message)}`,
-  );
+  const logMessage =
+    `${levelColor(`[${level.toUpperCase()}]`)} ${taskIdColored} ${argsColored} ${chalk.white(message)}`.replace(
+      / +/g,
+      " ",
+    );
+  logger[level](logMessage);
 };
 
-// Function to generate a unique request ID
-const generateRequestId = () => nanoid(8);
+const generateTaskId = () => nanoid(8);
 
-export { log, generateRequestId };
+export { log, generateTaskId };

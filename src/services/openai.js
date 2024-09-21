@@ -73,6 +73,7 @@ class OpenAiService {
   }
 
   async generateSongIntro(thisSongMetadata, previousSongMetadata) {
+    log("info", "Generating song intro", this.constructor.name);
     if (!thisSongMetadata.title) {
       throw new Error("Missing song metadata");
     }
@@ -103,6 +104,8 @@ class OpenAiService {
         },
       );
       const songIntro = response.data.choices[0].message.content;
+
+      log("info", `Generated song intro: ${songIntro}`, this.constructor.name);
       return songIntro;
     } catch (error) {
       throw new Error("Failed to generate song intro:", error);

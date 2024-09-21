@@ -13,7 +13,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import ClientManager from "./client/ClientManager.js";
 import { runWithContext, getContext } from "./utils/asyncLocalStorage.js";
-import { generateRequestId, log } from "./utils/logger.js";
+import { generateTaskId, log } from "./utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,22 +31,21 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(express.json());
 
 app.use((req, res, next) => {
-  const requestId = generateRequestId();
+  const taskId = generateTaskId();
   const requestMethod = req.method;
   const requestUrl = req.url;
-  runWithContext(
-    { category: "request-task", requestId, requestMethod, requestUrl },
-    () => {
-      log("info", `Received request`);
-      next();
-    },
-  );
+  req.taskId = taskId;
+  runWithContext({ taskId }, () => {
+    if (requestUrl !== "/status")
+      log("info", `Received request`, requestMethod, requestUrl);
+    next();
+  });
 });
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   log("error", `SERVER ERROR: ${err.stack}`, {
-    requestId: getContext().requestId,
+    taskId: getContext().taskId,
   });
   res.status(500).send("Something went wrong.");
 });
@@ -54,7 +53,7 @@ app.use("/", songRoutes);
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, async () => {
-  runWithContext({ category: "server-task" }, async () => {
+  runWithContext({ taskId: generateTaskId() }, async () => {
     log("info", `Server is running at http://localhost:${PORT}`);
 
     if (!process.env.CLIENT_URL) {

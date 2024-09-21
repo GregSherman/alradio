@@ -16,19 +16,34 @@ class AccountClient extends ClientService {
     let { handle, password, email, ...profileData } = req.body;
     log(
       "info",
-      `Attempting to register user with handle: ${handle}`,
+      `Attempting to register user with handle: ${handle} and email: ${email}`,
       this.constructor.name,
     );
 
     if (!handle) {
+      log(
+        "info",
+        "Failed to register user: Handle is required",
+        this.constructor.name,
+      );
       return res.status(400).json({ message: "Handle is required" });
     }
 
     if (!password) {
+      log(
+        "info",
+        "Failed to register user: Password is required",
+        this.constructor.name,
+      );
       return res.status(400).json({ message: "Password is required" });
     }
 
     if (!email) {
+      log(
+        "info",
+        "Failed to register user: Email is required",
+        this.constructor.name,
+      );
       return res.status(400).json({ message: "Email is required" });
     }
 
@@ -36,35 +51,70 @@ class AccountClient extends ClientService {
     email = email.trim().toLowerCase();
 
     if (await AccountModelService.isEmailTaken(email)) {
+      log(
+        "info",
+        "Failed to register user: Email already in use",
+        this.constructor.name,
+      );
       return res.status(400).json({ message: "Email already in use" });
     }
 
     if (await AccountModelService.isHandleTaken(handle)) {
+      log(
+        "info",
+        "Failed to register user: Handle already in use",
+        this.constructor.name,
+      );
       return res.status(400).json({ message: "Handle already in use" });
     }
 
     if (!/^[a-z0-9]{3,20}$/.test(handle)) {
+      log(
+        "info",
+        "Failed to register user: Handle must be alphanumeric and between 3 and 20 characters",
+        this.constructor.name,
+      );
       return res.status(400).json({
         message: "Handle must be alphanumeric and between 3 and 20 characters",
       });
     }
 
     if (!emailValidator.validate(email)) {
+      log(
+        "info",
+        "Failed to register user: Invalid email address",
+        this.constructor.name,
+      );
       return res.status(400).json({ message: "Invalid email address" });
     }
 
     leoProfanity.loadDictionary();
     if (leoProfanity.check(handle)) {
+      log(
+        "info",
+        "Failed to register user: Handle contains profanity",
+        this.constructor.name,
+      );
       return res.status(400).json({ message: "Handle contains profanity" });
     }
 
     if (password.length < 8) {
+      log(
+        "info",
+        "Failed to register user: Password must be at least 8 characters long",
+        this.constructor.name,
+      );
       return res
         .status(400)
         .json({ message: "Password must be at least 8 characters long" });
     }
 
     if (password.length > 256) {
+      log(
+        "info",
+        "Failed to register user: Password must be at most 256 characters long",
+        this.constructor.name,
+      );
       return res
         .status(400)
         .json({ message: "Password must be at most 256 characters long" });
@@ -75,6 +125,11 @@ class AccountClient extends ClientService {
       !/[0-9]/.test(password) ||
       !/[!@#$%^&*]/.test(password)
     ) {
+      log(
+        "info",
+        "Failed to register user: Password must contain a letter, number, and special character",
+        this.constructor.name,
+      );
       return res.status(400).json({
         message:
           "Password must contain a letter, number, and special character",
@@ -110,6 +165,11 @@ class AccountClient extends ClientService {
       password,
     );
     if (!passwordMatch) {
+      log(
+        "info",
+        `Failed to login user with handle: ${handle}. Incorrect handle or password`,
+        this.constructor.name,
+      );
       return res.status(401).json({ message: "Incorrect handle or password" });
     }
 
@@ -129,6 +189,7 @@ class AccountClient extends ClientService {
     });
     await ClientManager.changeClientHandle(streamId, handle);
     res.json({});
+    log("info", `Logged in user with handle: ${handle}`, this.constructor.name);
   }
 
   async logout(req, res) {
@@ -154,8 +215,18 @@ class AccountClient extends ClientService {
 
   async getPublicProfile(req, res) {
     let { handle } = req.params;
+    log(
+      "info",
+      `Fetching public profile for handle: ${handle}`,
+      this.constructor.name,
+    );
     const profile = await AccountModelService.getPublicUserProfile(handle);
     if (!profile) {
+      log(
+        "info",
+        `Failed to fetch public profile for handle: ${handle}. Profile not found`,
+        this.constructor.name,
+      );
       return res.status(404).json({ message: "Profile not found" });
     }
     res.json(profile);
@@ -167,8 +238,19 @@ class AccountClient extends ClientService {
       return;
     }
 
+    log(
+      "info",
+      `Fetching private profile for handle: ${authHandle}`,
+      this.constructor.name,
+    );
+
     const profile = await AccountModelService.getUserProfile(authHandle);
     if (!profile) {
+      log(
+        "info",
+        `Failed to fetch private profile for handle: ${authHandle}. Profile not found`,
+        this.constructor.name,
+      );
       return res.status(404).json({ message: "Profile not found" });
     }
     profile.isPrivate = true;
@@ -181,6 +263,12 @@ class AccountClient extends ClientService {
     let { handle } = req.params;
     handle = handle.trim().toLowerCase();
     const updateData = req.body;
+
+    log(
+      "info",
+      `Attempting to update profile for handle: ${handle}`,
+      this.constructor.name,
+    );
 
     if (authHandle !== handle) {
       return res.status(403).json({ message: "Forbidden" });
@@ -208,6 +296,11 @@ class AccountClient extends ClientService {
     handle = handle.trim().toLowerCase();
     const page = req.query.page || 1;
 
+    log(
+      "info",
+      `Fetching history for handle: ${handle}`,
+      this.constructor.name,
+    );
     const history = await HistoryModelService.fetchMostRecentlyPlayedTracks(
       page,
       10,
@@ -222,8 +315,19 @@ class AccountClient extends ClientService {
       return;
     }
 
+    log(
+      "info",
+      `Fetching handle and picture for token: ${authHandle}`,
+      this.constructor.name,
+    );
+
     const profile = await AccountModelService.getUserProfile(authHandle);
     if (!profile) {
+      log(
+        "info",
+        `Failed to fetch handle and picture for token: ${authHandle}. Profile not found`,
+        this.constructor.name,
+      );
       return res.status(404).json({ message: "Profile not found" });
     }
 

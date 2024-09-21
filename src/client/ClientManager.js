@@ -2,6 +2,7 @@ import AccountModelService from "../services/db/AccountModelService.js";
 import LastFMClient from "./auth_services/LastFMClient.js";
 import SongController from "../controllers/songController.js";
 import { EventEmitter } from "events";
+import { log } from "../utils/logger.js";
 
 class ClientManager extends EventEmitter {
   constructor() {
@@ -11,12 +12,14 @@ class ClientManager extends EventEmitter {
   }
 
   initialize() {
+    log("info", "Initializing Client Manager", this.constructor.name);
     SongController.on("songStarted", (metadata) =>
       this.changeCurrentSongForClients(metadata),
     );
   }
 
   async addClient(res) {
+    log("info", `Adding client: ${res.handle}`, this.constructor.name);
     if (res) {
       this._clients.add(res);
       res.on("close", () => {
@@ -38,6 +41,7 @@ class ClientManager extends EventEmitter {
   }
 
   async removeClient(res) {
+    log("info", `Removing client: ${res.handle}`, this.constructor.name);
     res.removeAllListeners("close");
     this._clients.delete(res);
     clearTimeout(this._listeners.get(res.handle)?.timeout);
@@ -47,12 +51,12 @@ class ClientManager extends EventEmitter {
   }
 
   changeCurrentSongForClients(metadata) {
+    log("info", "Changing current song for clients", this.constructor.name);
     for (const handle of this._listeners.keys()) {
       const listener = this._listeners.get(handle);
       clearTimeout(listener.timeout);
       if (!metadata?.trackId) continue;
 
-      listener.currentSongId = metadata.trackId;
       listener.timeout = setTimeout(async () => {
         await LastFMClient.scrobbleTrackForUser(handle, metadata);
       }, 30000);
@@ -64,6 +68,11 @@ class ClientManager extends EventEmitter {
   }
 
   async changeClientHandle(oldHandle, newHandle) {
+    log(
+      "info",
+      `Changing client handle from ${oldHandle} to ${newHandle}`,
+      this.constructor.name,
+    );
     const res = this.getResFromHandle(oldHandle);
     if (res) {
       await this.removeClient(res);
@@ -73,7 +82,13 @@ class ClientManager extends EventEmitter {
   }
 
   hasActiveClients() {
-    return this._clients.size > 0;
+    const result = this._clients.size > 0;
+    log(
+      "info",
+      `Checking if there are active clients: ${result}`,
+      this.constructor.name,
+    );
+    return result;
   }
 }
 

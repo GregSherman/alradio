@@ -9,6 +9,7 @@ import { log } from "../utils/logger.js";
 
 class SongClient extends ClientService {
   async getCurrentSongMetadata(req, res) {
+    log("info", "Creating song metadata event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -21,6 +22,7 @@ class SongClient extends ClientService {
     const songChangedListener = (newMetadata) => {
       const clientMetadata = this._clientifyMetadata(newMetadata);
       res.write(`data: ${JSON.stringify(clientMetadata)}\n\n`);
+      log("info", "Song metadata changed", req.taskId, this.constructor.name);
     };
 
     SongController.on("songStarted", songChangedListener);
@@ -29,16 +31,29 @@ class SongClient extends ClientService {
       SongController.off("songStarted", songChangedListener);
       SongController.off("songEnded", songChangedListener);
       res.end();
+      log(
+        "info",
+        "Song metadata stream closed",
+        req.taskId,
+        this.constructor.name,
+      );
     });
 
     req.on("error", () => {
       SongController.off("songStarted", songChangedListener);
       SongController.off("songEnded", songChangedListener);
       res.end();
+      log(
+        "info",
+        "Song metadata stream error",
+        req.taskId,
+        this.constructor.name,
+      );
     });
   }
 
   async getSongHistory(req, res) {
+    log("info", "Creating song history event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -77,6 +92,7 @@ class SongClient extends ClientService {
     await sendSongHistory();
 
     const songEndedListener = async () => {
+      log("info", "Sending song history", req.taskId, this.constructor.name);
       await sendSongHistory();
     };
 
@@ -84,15 +100,28 @@ class SongClient extends ClientService {
     req.on("close", () => {
       SongController.off("songEnded", songEndedListener);
       res.end();
+      log(
+        "info",
+        "Song history stream closed",
+        req.taskId,
+        this.constructor.name,
+      );
     });
 
     req.on("error", () => {
       SongController.off("songEnded", songEndedListener);
       res.end();
+      log(
+        "info",
+        "Song history stream error",
+        req.taskId,
+        this.constructor.name,
+      );
     });
   }
 
   async getNextSong(req, res) {
+    log("info", "Creating next song event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -102,6 +131,7 @@ class SongClient extends ClientService {
         QueueService.getNextQueuedSongMetadata(),
       );
       res.write(`data: ${JSON.stringify(nextSongMetadata)}\n\n`);
+      log("info", "Sending next song data", req.taskId, this.constructor.name);
     };
 
     sendNextSongData();
@@ -115,19 +145,23 @@ class SongClient extends ClientService {
       QueueService.off("songQueued", songQueuedListener);
       SongController.off("songStarted", songQueuedListener);
       res.end();
+      log("info", "Next song stream closed", req.taskId, this.constructor.name);
     });
 
     req.on("error", () => {
       QueueService.off("songQueued", songQueuedListener);
       SongController.off("songStarted", songQueuedListener);
       res.end();
+      log("info", "Next song stream error", req.taskId, this.constructor.name);
     });
   }
 
   async _handleSearchQuerySubmit(req, res, query) {
+    log("info", `Searching for track: ${query}`, this.constructor.name);
     try {
       let tracks = await SpotifyService.searchTrack(query);
       if (!tracks.length) {
+        log("info", `Track not found: ${query}`, this.constructor.name);
         res.json({ success: false, message: "Song not found" });
         return;
       }
@@ -145,18 +179,26 @@ class SongClient extends ClientService {
   }
 
   async _handleDirectTrackSubmit(req, res, trackId, userSubmittedId) {
+    log("info", `Submitting track: ${trackId}`, this.constructor.name);
     const track = await SpotifyService.getTrackData(trackId);
     if (!track?.trackId) {
+      log("info", `Track not found: ${trackId}`, this.constructor.name);
       res.json({ success: false, message: "Song not found" });
       return;
     }
 
     if (await this._isTrackIdQueued(trackId)) {
+      log("info", `Track already in queue: ${trackId}`, this.constructor.name);
       res.json({ success: false, message: "Song is already in the queue." });
       return;
     }
 
     if (await HistoryModelService.isTrackPlayedInLastHours(trackId)) {
+      log(
+        "info",
+        `Track played too recently: ${trackId}`,
+        this.constructor.name,
+      );
       res.json({
         success: false,
         message: "Song has been played too recently.",
@@ -182,6 +224,23 @@ class SongClient extends ClientService {
     if (!authHandle) {
       return;
     }
+    log(
+      "info",
+      `User ${authHandle} is submitting a song`,
+      this.constructor.name,
+    );
+
+    const query = req.body.query;
+    if (!query) {
+      log(
+        "info",
+        `User ${authHandle} submitted an invalid query`,
+        this.constructor.name,
+      );
+      return res
+        .status(400)
+        .json({ message: 'Invalid Request. Expected 1 parameter "query".' });
+    }
 
     if (
       !(await AccountModelService.userHasPermission(
@@ -200,6 +259,11 @@ class SongClient extends ClientService {
 
     if (req.body.query.length > 256 || req.body.query.trim().length === 0) {
       res.json({ success: false, message: "Song not found" });
+      log(
+        "info",
+        `User ${authHandle} submitted an invalid query`,
+        this.constructor.name,
+      );
       return;
     }
 
@@ -207,13 +271,6 @@ class SongClient extends ClientService {
       res.json({ success: false, message: "The queue is full." });
       log("info", `User submission queue is full`, this.constructor.name);
       return;
-    }
-
-    const query = req.body.query;
-    if (!query) {
-      return res
-        .status(400)
-        .json({ message: 'Invalid Request. Expected 1 parameter "query".' });
     }
 
     let trackId;

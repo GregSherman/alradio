@@ -25,6 +25,11 @@ class ProxyService {
     if (!this._apiUrl) return;
     const proxy = await this._getProxy();
     process.env.http_proxy = `http://${proxy.host}:${proxy.port}`;
+    log(
+      "info",
+      `Proxy set to ${proxy.host}:${proxy.port}`,
+      this.constructor.name,
+    );
   }
 
   _parseProxy(proxy) {

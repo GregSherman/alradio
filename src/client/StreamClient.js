@@ -4,6 +4,7 @@ import ClientService from "./ClientService.js";
 
 class StreamClient extends ClientService {
   getOrGenerateStreamId(req, res) {
+    log("info", "Generating stream ID", this.constructor.name);
     if (!req.cookies["anonymous-stream-id"]) {
       const streamId = `anonymous-listener-${Math.random().toString(36)}`;
       res.cookie("anonymous-stream-id", streamId, {
@@ -35,6 +36,7 @@ class StreamClient extends ClientService {
   }
 
   async getListeners(req, res) {
+    log("info", "Creating listeners event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -57,6 +59,7 @@ class StreamClient extends ClientService {
         list: loggedInListeners,
       };
       res.write(`data: ${JSON.stringify(listenerData)}\n\n`);
+      log("info", "Listeners data sent", req.taskId, this.constructor.name);
     };
 
     sendListenersData();
@@ -70,12 +73,14 @@ class StreamClient extends ClientService {
       ClientManager.off("clientConnected", clientConnectedListener);
       ClientManager.off("clientDisconnected", clientConnectedListener);
       res.end();
+      log("info", "Listeners stream closed", req.taskId, this.constructor.name);
     });
 
     req.on("error", () => {
       ClientManager.off("clientConnected", clientConnectedListener);
       ClientManager.off("clientDisconnected", clientConnectedListener);
       res.end();
+      log("info", "Listeners stream error", req.taskId, this.constructor.name);
     });
   }
 }

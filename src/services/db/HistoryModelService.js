@@ -6,13 +6,18 @@ class HistoryModelService {
   async addPlayedTrack(trackId, userSubmittedId = null) {
     log(
       "info",
-      `Adding played track to history: ${trackId} ${userSubmittedId}`,
+      `Adding played track to history: ${trackId} for user: ${userSubmittedId}`,
       this.constructor.name,
     );
     return History.create({ trackId, userSubmittedId });
   }
 
   async fetchRecentlyPlayedTracks(hours) {
+    log(
+      "info",
+      `Fetching history from the last ${hours} hours`,
+      this.constructor.name,
+    );
     const cutoff = new Date(Date.now() - hours * 3600 * 1000);
     return History.find({ datePlayed: { $gte: cutoff } }).exec();
   }
@@ -22,6 +27,12 @@ class HistoryModelService {
     limit = 10,
     userSubmittedId = null,
   ) {
+    log(
+      "info",
+      `Fetching ${limit} tracks from history page ${page}`,
+      this.constructor.name,
+    );
+
     const skip = (page - 1) * limit;
     const query = userSubmittedId ? { userSubmittedId } : {};
 
@@ -42,12 +53,23 @@ class HistoryModelService {
   async isLastPage(page, limit = 10, userSubmittedId = null) {
     const query = userSubmittedId ? { userSubmittedId } : {};
     const totalTracks = await History.countDocuments(query);
-    return page * limit >= totalTracks;
+    const result = page * limit >= totalTracks;
+    log(
+      "info",
+      `Checking if page ${page} is the last page: ${result}`,
+      this.constructor.name,
+    );
+    return result;
   }
 
   async isTrackPlayedInLastHours(trackId, hours = 3) {
     const recentlyPlayed = await this.fetchRecentlyPlayedTracks(hours);
-    return recentlyPlayed.some((track) => track.trackId === trackId);
+    const result = recentlyPlayed.some((track) => track.trackId === trackId);
+    log(
+      "info",
+      `Checking if track ${trackId} was played in the last ${hours} hours: ${result}`,
+      this.constructor.name,
+    );
   }
 }
 

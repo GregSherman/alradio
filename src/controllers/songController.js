@@ -36,6 +36,7 @@ class SongController extends EventEmitter {
     // Event listeners for the song gatherer
     this.on("notDownloading", () => this._songGatherer());
     QueueService.on("audioQueueNeedsFilling", () => this._songGatherer());
+
     this._songGatherer();
   }
 
@@ -74,7 +75,11 @@ class SongController extends EventEmitter {
     let { trackId, userSubmittedId, requestId } =
       await QueueService.popNextTrack();
     if (!trackId) {
-      log("info", "No more songs in queue. Populating suggestion queue.");
+      log(
+        "info",
+        "No more songs in queue. Populating suggestion queue.",
+        this.constructor.name,
+      );
       await SpotifyService.populateSuggestionQueue();
       ({ trackId, userSubmittedId, requestId } =
         await QueueService.popNextTrack());

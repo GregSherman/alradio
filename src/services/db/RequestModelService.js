@@ -20,11 +20,21 @@ class RequestModelService {
   }
 
   async fetchRecentlyRequestedTracks(hours) {
+    log(
+      "info",
+      `Fetching requests from the last ${hours} hours`,
+      this.constructor.name,
+    );
     const cutoff = new Date(Date.now() - hours * 3600 * 1000);
     return Request.find({ dateRequested: { $gte: cutoff } }).exec();
   }
 
   async fetchLastRequestedTracks(limit = 10) {
+    log(
+      "info",
+      `Fetching last ${limit} requested tracks`,
+      this.constructor.name,
+    );
     return Request.find({ playStatus: "requested" })
       .sort({ dateRequested: -1 })
       .limit(limit)
@@ -32,6 +42,11 @@ class RequestModelService {
   }
 
   async fetchLastNRequestedTracksByUser(userSubmittedId, limit = 10, page = 1) {
+    log(
+      "info",
+      `Fetching last ${limit} requested tracks from user ${userSubmittedId}`,
+      this.constructor.name,
+    );
     const skip = (page - 1) * limit;
     return Request.find({ userSubmittedId })
       .sort({ dateRequested: -1 })
@@ -41,6 +56,11 @@ class RequestModelService {
   }
 
   async markRequestAsPlayed(requestId) {
+    log(
+      "info",
+      `Marking request as played: ${requestId}`,
+      this.constructor.name,
+    );
     const request = await Request.findById(requestId);
     if (request) {
       request.playStatus = "played";
@@ -54,6 +74,7 @@ class RequestModelService {
   }
 
   async getNextUserRequest() {
+    log("info", "Getting next user request", this.constructor.name);
     const request = await Request.findOne({
       playStatus: "requested",
     })
@@ -71,18 +92,25 @@ class RequestModelService {
   }
 
   async isQueueFull() {
-    return Request.countDocuments({ playStatus: "requested" }) >= 30;
+    const result =
+      (await Request.countDocuments({ playStatus: "requested" })) >= 30;
+    log("info", `Queue is full: ${result}`, this.constructor.name);
+    return result;
   }
 
   async isTrackRequested(trackId) {
-    return Request.exists({
+    const result = await Request.exists({
       trackId,
       playStatus: { $in: ["requested", "pending"] },
     });
+    log("info", `Is track already requested: ${result}`, this.constructor.name);
+    return result;
   }
 
   async hasRequestedTracks() {
-    return Request.exists({ playStatus: "requested" });
+    const result = await Request.exists({ playStatus: "requested" });
+    log("info", `Has requested tracks: ${result}`, this.constructor.name);
+    return result;
   }
 
   async updateRequestQueue(newQueue) {
@@ -92,15 +120,21 @@ class RequestModelService {
 
   async isUserRateLimited(userSubmittedId) {
     const cutoff = new Date(Date.now() - 3600 * 1000);
-    return (
+    const result =
       (await Request.countDocuments({
         userSubmittedId,
         dateRequested: { $gte: cutoff },
-      })) >= 3
-    );
+      })) >= 3;
+    log("info", `User rate limited: ${result}`, this.constructor.name);
+    return result;
   }
 
   async markRequestAsFailed(requestId) {
+    log(
+      "info",
+      `Marking request as failed: ${requestId}`,
+      this.constructor.name,
+    );
     const request = await Request.findById(requestId);
     if (request) {
       request.playStatus = "failed";
@@ -109,6 +143,7 @@ class RequestModelService {
   }
 
   async getQueueSize() {
+    log("info", "Getting queue size", this.constructor.name);
     return Request.countDocuments({ playStatus: "requested" });
   }
 }
