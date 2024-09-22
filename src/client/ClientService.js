@@ -1,9 +1,8 @@
 import jwt from "jsonwebtoken";
-import { EventEmitter } from "events";
 import { log } from "../utils/logger.js";
 import { getContext } from "../utils/asyncLocalStorage.js";
 
-class ClientService extends EventEmitter {
+class ClientService {
   authenticateStrict(req, res) {
     log("info", "Authenticating client strictly", this.constructor.name);
     const token = req.cookies?.token;

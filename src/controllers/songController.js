@@ -1,9 +1,8 @@
-/* eslint-disable no-constant-condition */
-import SpotifyService from "../services/spotify.js";
-import QueueService from "../services/queue.js";
-import OpenAIService from "../services/openai.js";
+import SpotifyService from "../services/SpotifyService.js";
+import QueueService from "../services/QueueService.js";
+import OpenAIService from "../services/OpenAiService.js";
 import TrackModelService from "../services/db/TrackModelService.js";
-import ProxyService from "../services/proxy.js";
+import ProxyService from "../services/ProxyService.js";
 
 import { EndableError } from "../errors.js";
 
@@ -13,13 +12,12 @@ import ffprobe from "ffprobe";
 import ffprobeStatic from "ffprobe-static";
 import { exec } from "child_process";
 import { promisify } from "util";
-import EventEmitter from "events";
 import ClientManager from "../client/ClientManager.js";
 import { log } from "../utils/logger.js";
+import EventService from "../services/EventService.js";
 
-class SongController extends EventEmitter {
+class SongController {
   constructor() {
-    super();
     this.songPlaying = false;
     this.currentSongMetadata = {};
     this.songDownloading = false;
@@ -29,19 +27,24 @@ class SongController extends EventEmitter {
   initialize() {
     log("info", "Initializing Song Controller", this.constructor.name);
     // Event listeners for the song player
-    QueueService.on("songQueued", () => this._player());
-    ClientManager.on("clientConnected", () => this._player());
-    this.on("songEnded", () => this._player());
+    EventService.onWithServerContext("songQueued", () => this._player());
+    EventService.onWithServerContext("clientConnected", () => this._player());
+    EventService.onWithServerContext("songEnded", () => this._player());
 
     // Event listeners for the song gatherer
-    this.on("notDownloading", () => this._songGatherer());
-    QueueService.on("audioQueueNeedsFilling", () => this._songGatherer());
+    EventService.onWithServerContext("notDownloading", () =>
+      this._songGatherer(),
+    );
+    EventService.onWithServerContext("audioQueueNeedsFilling", () =>
+      this._songGatherer(),
+    );
 
     this._songGatherer();
   }
 
   // The song player. it takes the existing audio file and streams it to the clients.
   async _player() {
+    log("info", "Song player triggered", this.constructor.name);
     if (
       this.songPlaying ||
       !ClientManager.hasActiveClients() ||
@@ -63,6 +66,7 @@ class SongController extends EventEmitter {
 
   // The song gatherer. it gets the next song from the queue and downloads it.
   async _songGatherer() {
+    log("info", "Song Gatherer triggered", this.constructor.name);
     if (this.songDownloading || !QueueService.audioQueueNeedsFilling()) {
       log(
         "info",
@@ -122,13 +126,13 @@ class SongController extends EventEmitter {
   _setStateDownloading(trackId) {
     this.songDownloading = true;
     this.songDownloadingTrackId = trackId;
-    this.emit("downloading");
+    EventService.emit("downloading");
   }
 
   _setStateNotDownloading() {
     this.songDownloading = false;
     this.songDownloadingTrackId = null;
-    this.emit("notDownloading");
+    EventService.emit("notDownloading");
   }
 
   async _markSongAsPlayed(metadata) {
@@ -143,7 +147,7 @@ class SongController extends EventEmitter {
       `Playing song ${metadata.title} - ${metadata.artist} from ${metadata.userSubmittedId}`,
       this.constructor.name,
     );
-    this.emit("songStarted", metadata);
+    EventService.emit("songStarted", metadata);
   }
 
   _writeDataToClients(data) {
@@ -165,7 +169,7 @@ class SongController extends EventEmitter {
     const handleForceStop = () => {
       throttle.end();
     };
-    this.on("forceStopSong", handleForceStop);
+    EventService.onWithServerContext("forceStopSong", handleForceStop);
 
     throttle
       .on("data", (data) => {
@@ -175,8 +179,8 @@ class SongController extends EventEmitter {
         readable.close();
         this.songPlaying = false;
         this.currentSongMetadata = {};
-        this.removeListener("forceStopSong", handleForceStop);
-        this.emit("songEnded");
+        EventService.removeListener("forceStopSong", handleForceStop);
+        EventService.emit("songEnded");
         fs.unlinkSync(path);
       });
 
@@ -287,7 +291,7 @@ class SongController extends EventEmitter {
   }
 
   skipCurrentSong() {
-    this.emit("forceStopSong");
+    EventService.emit("forceStopSong");
   }
 }
 

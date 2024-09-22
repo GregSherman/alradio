@@ -1,9 +1,8 @@
-import { EventEmitter } from "events";
 import RequestModelService from "./db/RequestModelService.js";
 import { log } from "../utils/logger.js";
-class QueueService extends EventEmitter {
+import EventService from "./EventService.js";
+class QueueService {
   constructor() {
-    super();
     // Format: [{trackId: "trackId1", userSubmittedId: null}, ...]
     this._autoSuggestionQueue = [];
     // Format: [{path: "path/to/audio/file", metadata: {trackid: '...', userSubmittedId: 'greg'}}, ...]
@@ -41,7 +40,7 @@ class QueueService extends EventEmitter {
 
   addToAudioQueue(audioFile) {
     this._audioQueue.push(audioFile);
-    this.emit("songQueued");
+    EventService.emit("songQueued");
     log(
       "info",
       `Added audio file ${audioFile.metadata.title} - ${audioFile.metadata.artist} to audio queue`,
@@ -52,7 +51,7 @@ class QueueService extends EventEmitter {
   popNextAudioFile() {
     const file = this._audioQueue.shift();
     if (this.audioQueueNeedsFilling()) {
-      this.emit("audioQueueNeedsFilling");
+      EventService.emit("audioQueueNeedsFilling");
     }
     return file;
   }

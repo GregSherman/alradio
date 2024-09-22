@@ -1,11 +1,12 @@
 import ClientService from "./ClientService.js";
-import SpotifyService from "../services/spotify.js";
-import QueueService from "../services/queue.js";
+import SpotifyService from "../services/SpotifyService.js";
+import QueueService from "../services/QueueService.js";
 import HistoryModelService from "../services/db/HistoryModelService.js";
-import SongController from "../controllers/songController.js";
+import SongController from "../controllers/SongController.js";
 import RequestModelService from "../services/db/RequestModelService.js";
 import AccountModelService from "../services/db/AccountModelService.js";
 import { log } from "../utils/logger.js";
+import EventService from "../services/EventService.js";
 
 class SongClient extends ClientService {
   async getCurrentSongMetadata(req, res) {
@@ -25,11 +26,11 @@ class SongClient extends ClientService {
       log("info", "Song metadata changed", req.taskId, this.constructor.name);
     };
 
-    SongController.on("songStarted", songChangedListener);
-    SongController.on("songEnded", songChangedListener);
+    EventService.onWithClientContext("songStarted", songChangedListener);
+    EventService.onWithClientContext("songEnded", songChangedListener);
     req.on("close", () => {
-      SongController.off("songStarted", songChangedListener);
-      SongController.off("songEnded", songChangedListener);
+      EventService.off("songStarted", songChangedListener);
+      EventService.off("songEnded", songChangedListener);
       res.end();
       log(
         "info",
@@ -93,9 +94,9 @@ class SongClient extends ClientService {
       await sendSongHistory();
     };
 
-    SongController.on("songEnded", songEndedListener);
+    EventService.onWithClientContext("songEnded", songEndedListener);
     req.on("close", () => {
-      SongController.off("songEnded", songEndedListener);
+      EventService.off("songEnded", songEndedListener);
       res.end();
       log(
         "info",
@@ -134,11 +135,11 @@ class SongClient extends ClientService {
       sendNextSongData();
     };
 
-    QueueService.on("songQueued", songQueuedListener);
-    SongController.on("songStarted", songQueuedListener);
+    EventService.onWithClientContext("songQueued", songQueuedListener);
+    EventService.onWithClientContext("songStarted", songQueuedListener);
     req.on("close", () => {
-      QueueService.off("songQueued", songQueuedListener);
-      SongController.off("songStarted", songQueuedListener);
+      EventService.off("songQueued", songQueuedListener);
+      EventService.off("songStarted", songQueuedListener);
       res.end();
       log("info", "Next song stream closed", req.taskId, this.constructor.name);
     });

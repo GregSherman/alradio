@@ -1,8 +1,8 @@
 import Account from "../../models/Account.js";
 import bcrypt from "bcrypt";
-import SongController from "../../controllers/songController.js";
 import ClientManager from "../../client/ClientManager.js";
 import { log } from "../../utils/logger.js";
+import EventService from "../EventService.js";
 
 const PERMISSION_MAP = {
   noRateLimit: ["admin"],
@@ -10,7 +10,9 @@ const PERMISSION_MAP = {
 
 class AccountModelService {
   async initialize() {
-    SongController.on("songEnded", () => this._incrementListenersPlayCount());
+    EventService.onWithServerContext("songEnded", () =>
+      this._incrementListenersPlayCount(),
+    );
     await this._forceAllUsersOffline();
   }
 

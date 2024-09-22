@@ -1,3 +1,4 @@
+import EventService from "../services/EventService.js";
 import { log } from "../utils/logger.js";
 import ClientManager from "./ClientManager.js";
 import ClientService from "./ClientService.js";
@@ -67,11 +68,17 @@ class StreamClient extends ClientService {
       sendListenersData();
     };
 
-    ClientManager.on("clientConnected", clientConnectedListener);
-    ClientManager.on("clientDisconnected", clientConnectedListener);
+    EventService.onWithClientContext(
+      "clientConnected",
+      clientConnectedListener,
+    );
+    EventService.onWithClientContext(
+      "clientDisconnected",
+      clientConnectedListener,
+    );
     req.on("close", () => {
-      ClientManager.off("clientConnected", clientConnectedListener);
-      ClientManager.off("clientDisconnected", clientConnectedListener);
+      EventService.off("clientConnected", clientConnectedListener);
+      EventService.off("clientDisconnected", clientConnectedListener);
       res.end();
       log("info", "Listeners stream closed", req.taskId, this.constructor.name);
     });

@@ -1,19 +1,18 @@
 import AccountModelService from "../services/db/AccountModelService.js";
 import LastFMClient from "./auth_services/LastFMClient.js";
-import SongController from "../controllers/songController.js";
-import { EventEmitter } from "events";
+import SongController from "../controllers/SongController.js";
 import { log } from "../utils/logger.js";
+import EventService from "../services/EventService.js";
 
-class ClientManager extends EventEmitter {
+class ClientManager {
   constructor() {
-    super();
     this._clients = new Set();
     this._listeners = new Map();
   }
 
   initialize() {
     log("info", "Initializing Client Manager", this.constructor.name);
-    SongController.on("songStarted", (metadata) =>
+    EventService.onWithClientContext("songStarted", (metadata) =>
       this.changeCurrentSongForClients(metadata),
     );
   }
@@ -37,7 +36,7 @@ class ClientManager extends EventEmitter {
     clearTimeout(this._listeners.get(res.handle)?.timeout);
     this._listeners.set(res.handle, { timeout });
     await AccountModelService.updateUserOnlineStatus(res.handle, true);
-    this.emit("clientConnected");
+    EventService.emit("clientConnected");
   }
 
   async removeClient(res) {
@@ -47,7 +46,7 @@ class ClientManager extends EventEmitter {
     clearTimeout(this._listeners.get(res.handle)?.timeout);
     this._listeners.delete(res.handle);
     await AccountModelService.updateUserOnlineStatus(res.handle, false);
-    this.emit("clientDisconnected");
+    EventService.emit("clientDisconnected");
   }
 
   changeCurrentSongForClients(metadata) {

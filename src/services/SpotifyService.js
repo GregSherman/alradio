@@ -1,5 +1,5 @@
 import axios from "axios";
-import QueueService from "./queue.js";
+import QueueService from "./QueueService.js";
 import TrackModelService from "./db/TrackModelService.js";
 import HistoryModelService from "./db/HistoryModelService.js";
 import { log } from "../utils/logger.js";
