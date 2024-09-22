@@ -37,7 +37,6 @@ class StreamClient extends ClientService {
   }
 
   async getListeners(req, res) {
-    log("info", "Creating listeners event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -80,11 +79,6 @@ class StreamClient extends ClientService {
       EventService.off("clientConnected", clientConnectedListener);
       EventService.off("clientDisconnected", clientConnectedListener);
       res.end();
-      log("info", "Listeners stream closed", req.taskId, this.constructor.name);
-    });
-
-    req.on("error", () => {
-      log("info", "Listeners stream error", req.taskId, this.constructor.name);
     });
   }
 }

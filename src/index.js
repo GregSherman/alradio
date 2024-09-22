@@ -13,7 +13,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import ClientManager from "./client/ClientManager.js";
 import { runWithContext, getContext } from "./utils/asyncLocalStorage.js";
-import { generateTaskId, log } from "./utils/logger.js";
+import { generateTaskId, log, logFullContext } from "./utils/logger.js";
 import EventService from "./services/EventService.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,11 +36,19 @@ app.use((req, res, next) => {
   const requestMethod = req.method;
   const requestUrl = req.url;
   req.taskId = taskId;
-  runWithContext({ category: "client-task", taskId }, () => {
-    if (requestUrl !== "/status")
-      log("info", `Received request`, requestMethod, requestUrl);
-    next();
-  });
+  runWithContext(
+    {
+      taskType: "client-task",
+      taskId,
+      category: "REQUEST",
+      requestMethod,
+      requestUrl,
+    },
+    () => {
+      if (requestUrl !== "/status") logFullContext("info", "");
+      next();
+    },
+  );
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -55,7 +63,7 @@ app.use("/", songRoutes);
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, async () => {
   runWithContext(
-    { category: "server-task", taskId: generateTaskId() },
+    { taskType: "server-task", taskId: generateTaskId() },
     async () => {
       log("info", `Server is running at http://localhost:${PORT}`);
 

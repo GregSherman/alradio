@@ -10,7 +10,6 @@ import EventService from "../services/EventService.js";
 
 class SongClient extends ClientService {
   async getCurrentSongMetadata(req, res) {
-    log("info", "Creating song metadata event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -23,7 +22,6 @@ class SongClient extends ClientService {
     const songChangedListener = (newMetadata) => {
       const clientMetadata = this._clientifyMetadata(newMetadata);
       res.write(`data: ${JSON.stringify(clientMetadata)}\n\n`);
-      log("info", "Song metadata changed", req.taskId, this.constructor.name);
     };
 
     EventService.onWithClientContext("songStarted", songChangedListener);
@@ -32,26 +30,10 @@ class SongClient extends ClientService {
       EventService.off("songStarted", songChangedListener);
       EventService.off("songEnded", songChangedListener);
       res.end();
-      log(
-        "info",
-        "Song metadata stream closed",
-        req.taskId,
-        this.constructor.name,
-      );
-    });
-
-    req.on("error", () => {
-      log(
-        "info",
-        "Song metadata stream error",
-        req.taskId,
-        this.constructor.name,
-      );
     });
   }
 
   async getSongHistory(req, res) {
-    log("info", "Creating song history event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -90,7 +72,6 @@ class SongClient extends ClientService {
     await sendSongHistory();
 
     const songEndedListener = async () => {
-      log("info", "Sending song history", req.taskId, this.constructor.name);
       await sendSongHistory();
     };
 
@@ -98,26 +79,10 @@ class SongClient extends ClientService {
     req.on("close", () => {
       EventService.off("songEnded", songEndedListener);
       res.end();
-      log(
-        "info",
-        "Song history stream closed",
-        req.taskId,
-        this.constructor.name,
-      );
-    });
-
-    req.on("error", () => {
-      log(
-        "info",
-        "Song history stream error",
-        req.taskId,
-        this.constructor.name,
-      );
     });
   }
 
   async getNextSong(req, res) {
-    log("info", "Creating next song event stream", this.constructor.name);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -127,7 +92,6 @@ class SongClient extends ClientService {
         QueueService.getNextQueuedSongMetadata(),
       );
       res.write(`data: ${JSON.stringify(nextSongMetadata)}\n\n`);
-      log("info", "Sending next song data", req.taskId, this.constructor.name);
     };
 
     sendNextSongData();
@@ -141,11 +105,6 @@ class SongClient extends ClientService {
       EventService.off("songQueued", songQueuedListener);
       EventService.off("songStarted", songQueuedListener);
       res.end();
-      log("info", "Next song stream closed", req.taskId, this.constructor.name);
-    });
-
-    req.on("error", () => {
-      log("info", "Next song stream error", req.taskId, this.constructor.name);
     });
   }
 

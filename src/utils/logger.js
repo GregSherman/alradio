@@ -16,7 +16,6 @@ const getColorForText = (text) => {
   return chalk.hex(`#${hash.slice(0, 6)}`);
 };
 
-// Configure log4js
 log4js.configure({
   appenders: {
     out: {
@@ -34,33 +33,116 @@ log4js.configure({
 
 const logger = log4js.getLogger();
 
-const log = (level, message, ...args) => {
-  const context = getContext();
-  const taskId = context.taskId || "";
-  const category = context.category || "";
-
-  const taskIdColored = taskId ? getColorForText(taskId)(`[${taskId}]`) : "";
-  const categoryColored = category
-    ? getColorForText(category)(`[${category}]`)
-    : "";
-  const levelColor = levelColors[level] || levelColors.default;
+const buildColoredLog = ({
+  taskType,
+  taskId,
+  category,
+  previousTaskId,
+  requestMethod,
+  requestUrl,
+  args,
+  allowlist,
+}) => {
+  const taskTypeColored =
+    allowlist.taskType && taskType
+      ? getColorForText(taskType)(`[${taskType}]`)
+      : "";
+  const taskIdColored =
+    allowlist.taskId && taskId ? getColorForText(taskId)(`[${taskId}]`) : "";
+  const categoryColored =
+    allowlist.category && category
+      ? getColorForText(category)(`[${category}]`)
+      : "";
+  const prevTaskIdColored =
+    allowlist.category && category === "EVENT" && previousTaskId
+      ? getColorForText(previousTaskId)(`[${previousTaskId}]`)
+      : "";
+  const requestMethodColored =
+    allowlist.category && category === "REQUEST" && requestMethod
+      ? getColorForText(requestMethod)(`[${requestMethod}]`)
+      : "";
+  const requestUrlColored =
+    allowlist.category && category === "REQUEST" && requestUrl
+      ? getColorForText(requestUrl)(`[${requestUrl}]`)
+      : "";
 
   const argsColored = args
-    .map((arg) => {
-      if (arg === taskId) return;
-      const color = getColorForText(arg);
-      return color(`[${arg}]`);
-    })
+    .filter((arg) => arg !== taskId)
+    .map((arg) => getColorForText(arg)(`[${arg}]`))
     .join(" ");
 
-  const logMessage =
-    `${levelColor(`[${level.toUpperCase()}]`)} ${categoryColored} ${taskIdColored} ${argsColored} ${chalk.grey(message)}`.replace(
-      / +/g,
-      " ",
-    );
+  return {
+    taskTypeColored,
+    taskIdColored,
+    categoryColored,
+    prevTaskIdColored,
+    requestMethodColored,
+    requestUrlColored,
+    argsColored,
+  };
+};
+
+const logCore = (level, message, allowlist, ...args) => {
+  const {
+    taskType = "",
+    taskId = "",
+    category = "",
+    previousTaskId = "",
+    requestMethod = "",
+    requestUrl = "",
+  } = getContext();
+
+  const levelColor = levelColors[level] || levelColors.default;
+
+  const {
+    taskTypeColored,
+    taskIdColored,
+    categoryColored,
+    prevTaskIdColored,
+    requestMethodColored,
+    requestUrlColored,
+    argsColored,
+  } = buildColoredLog({
+    taskType,
+    taskId,
+    category,
+    previousTaskId,
+    requestMethod,
+    requestUrl,
+    args,
+    allowlist,
+  });
+
+  const logMessage = [
+    levelColor(`[${level.toUpperCase()}]`),
+    taskTypeColored,
+    taskIdColored,
+    prevTaskIdColored,
+    categoryColored,
+    requestMethodColored,
+    requestUrlColored,
+    argsColored,
+    chalk.grey(message),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   logger[level](logMessage);
 };
 
-const generateTaskId = () => nanoid(8);
+const log = (level, message, ...args) => {
+  const allowlist = { taskType: true, taskId: true };
+  logCore(level, message, allowlist, ...args);
+};
 
-export { log, generateTaskId };
+const logFullContext = (level, message, ...args) => {
+  const allowlist = {
+    taskType: true,
+    taskId: true,
+    category: true,
+  };
+  logCore(level, message, allowlist, ...args);
+};
+
+const generateTaskId = () => nanoid(8);
+export { log, logFullContext, generateTaskId };

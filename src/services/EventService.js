@@ -1,6 +1,6 @@
 import EventEmitter from "events";
 import { runWithContext } from "../utils/asyncLocalStorage.js";
-import { generateTaskId, log } from "../utils/logger.js";
+import { generateTaskId, logFullContext } from "../utils/logger.js";
 
 class EventService extends EventEmitter {
   constructor() {
@@ -10,14 +10,13 @@ class EventService extends EventEmitter {
   onWithClientContext(eventName, listener) {
     const wrappedListener = (...args) => {
       runWithContext(
-        { category: "client-task", taskId: generateTaskId() },
+        {
+          taskType: "client-task",
+          taskId: generateTaskId(),
+          category: "EVENT",
+        },
         () => {
-          log(
-            "info",
-            `Event triggered. Running client task.`,
-            "EVENT",
-            eventName,
-          );
+          logFullContext("info", "", eventName);
           listener(...args);
         },
       );
@@ -28,14 +27,13 @@ class EventService extends EventEmitter {
   onWithServerContext(eventName, listener) {
     const wrappedListener = (...args) => {
       runWithContext(
-        { category: "server-task", taskId: generateTaskId() },
+        {
+          taskType: "server-task",
+          taskId: generateTaskId(),
+          category: "EVENT",
+        },
         () => {
-          log(
-            "info",
-            `Event triggered. Running server task.`,
-            "EVENT",
-            eventName,
-          );
+          logFullContext("info", "", eventName);
           listener(...args);
         },
       );
