@@ -1,4 +1,6 @@
+import SongController from "../controllers/SongController.js";
 import EventService from "../services/EventService.js";
+import QueueService from "../services/QueueService.js";
 import { log } from "../utils/logger.js";
 import ClientManager from "./ClientManager.js";
 import ClientService from "./ClientService.js";
@@ -36,10 +38,26 @@ class StreamClient extends ClientService {
     ClientManager.addClient(res);
   }
 
-  async getListeners(req, res) {
+  async getLiveDataStream(req, res) {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+
+    const sendCurrentSongData = () => {
+      const currentSongMetadata = this._clientifyMetadata(
+        SongController.currentSongMetadata,
+      );
+      res.write("event: currentSongData\n");
+      res.write(`data: ${JSON.stringify(currentSongMetadata)}\n\n`);
+    };
+
+    const sendNextSongData = () => {
+      const nextSongMetadata = this._clientifyMetadata(
+        QueueService.getNextQueuedSongMetadata(),
+      );
+      res.write("event: nextSongData\n");
+      res.write(`data: ${JSON.stringify(nextSongMetadata)}\n\n`);
+    };
 
     const sendListenersData = () => {
       const listeners = Array.from(ClientManager._listeners.keys());
@@ -58,26 +76,55 @@ class StreamClient extends ClientService {
         },
         list: loggedInListeners,
       };
+      res.write("event: listenersData\n");
       res.write(`data: ${JSON.stringify(listenerData)}\n\n`);
-      log("info", "Listeners data sent", req.taskId, this.constructor.name);
     };
 
+    // Initial data
+    sendCurrentSongData();
+    sendNextSongData();
     sendListenersData();
-    const clientConnectedListener = () => {
+
+    // Event listeners
+    const songEndedListener = async () => {
+      sendCurrentSongData();
+      sendNextSongData();
+    };
+
+    const songStartedListener = () => {
+      sendCurrentSongData();
+      sendNextSongData();
+    };
+
+    const songQueuedListener = () => {
+      sendNextSongData();
+    };
+
+    const listeningStatusListener = () => {
       sendListenersData();
     };
 
+    EventService.onWithClientContext("songEnded", songEndedListener);
+    EventService.onWithClientContext("songStarted", songStartedListener);
+    EventService.onWithClientContext("songQueued", songQueuedListener);
     EventService.onWithClientContext(
       "clientConnected",
-      clientConnectedListener,
+      listeningStatusListener,
     );
     EventService.onWithClientContext(
       "clientDisconnected",
-      clientConnectedListener,
+      listeningStatusListener,
     );
+
     req.on("close", () => {
-      EventService.off("clientConnected", clientConnectedListener);
-      EventService.off("clientDisconnected", clientConnectedListener);
+      EventService.removeListener("songEnded", songEndedListener);
+      EventService.removeListener("songStarted", songStartedListener);
+      EventService.removeListener("songQueued", songQueuedListener);
+      EventService.removeListener("clientConnected", listeningStatusListener);
+      EventService.removeListener(
+        "clientDisconnected",
+        listeningStatusListener,
+      );
       res.end();
     });
   }

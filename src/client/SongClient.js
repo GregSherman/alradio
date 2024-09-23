@@ -6,106 +6,37 @@ import SongController from "../controllers/SongController.js";
 import RequestModelService from "../services/db/RequestModelService.js";
 import AccountModelService from "../services/db/AccountModelService.js";
 import { log } from "../utils/logger.js";
-import EventService from "../services/EventService.js";
 
 class SongClient extends ClientService {
-  async getCurrentSongMetadata(req, res) {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    const initialMetadata = this._clientifyMetadata(
-      SongController.currentSongMetadata,
-    );
-    res.write(`data: ${JSON.stringify(initialMetadata)}\n\n`);
-
-    const songChangedListener = (newMetadata) => {
-      const clientMetadata = this._clientifyMetadata(newMetadata);
-      res.write(`data: ${JSON.stringify(clientMetadata)}\n\n`);
-    };
-
-    EventService.onWithClientContext("songStarted", songChangedListener);
-    EventService.onWithClientContext("songEnded", songChangedListener);
-    req.on("close", () => {
-      EventService.off("songStarted", songChangedListener);
-      EventService.off("songEnded", songChangedListener);
-      res.end();
-    });
-  }
-
   async getSongHistory(req, res) {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    let { page } = req.params;
-    page = parseInt(page, 10);
+    let page = parseInt(req.params.page);
     if (isNaN(page) || page < 1) {
       page = 1;
     }
 
-    const sendSongHistory = async () => {
-      const songHistory =
-        await HistoryModelService.fetchMostRecentlyPlayedTracks(page);
-      const isLastPage = await HistoryModelService.isLastPage(page);
+    log("info", `Fetching song history page: ${page}`, this.constructor.name);
+    const songHistory =
+      await HistoryModelService.fetchMostRecentlyPlayedTracks(page);
+    const isLastPage = await HistoryModelService.isLastPage(page);
 
-      // Do not send the current song in the history
-      const currentTrackId = SongController.currentSongMetadata?.trackId;
-      if (
-        page === 1 &&
-        songHistory.length &&
-        songHistory[0].trackId === currentTrackId
-      ) {
-        songHistory.shift();
-      }
+    // Do not send the current song in the history
+    const currentTrackId = SongController.currentSongMetadata?.trackId;
+    if (
+      page === 1 &&
+      songHistory.length &&
+      songHistory[0].trackId === currentTrackId
+    ) {
+      songHistory.shift();
+    }
 
-      const clientifiedHistory = songHistory.map((song) =>
-        this._clientifyMetadata(song),
-      );
-      const response = {
-        tracks: clientifiedHistory,
-        isLastPage,
-      };
-      res.write(`data: ${JSON.stringify(response)}\n\n`);
+    const clientifiedHistory = songHistory.map((song) =>
+      this._clientifyMetadata(song),
+    );
+    const response = {
+      tracks: clientifiedHistory,
+      isLastPage,
     };
-
-    await sendSongHistory();
-
-    const songEndedListener = async () => {
-      await sendSongHistory();
-    };
-
-    EventService.onWithClientContext("songEnded", songEndedListener);
-    req.on("close", () => {
-      EventService.off("songEnded", songEndedListener);
-      res.end();
-    });
-  }
-
-  async getNextSong(req, res) {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    const sendNextSongData = () => {
-      const nextSongMetadata = this._clientifyMetadata(
-        QueueService.getNextQueuedSongMetadata(),
-      );
-      res.write(`data: ${JSON.stringify(nextSongMetadata)}\n\n`);
-    };
-
-    sendNextSongData();
-    const songQueuedListener = () => {
-      sendNextSongData();
-    };
-
-    EventService.onWithClientContext("songQueued", songQueuedListener);
-    EventService.onWithClientContext("songStarted", songQueuedListener);
-    req.on("close", () => {
-      EventService.off("songQueued", songQueuedListener);
-      EventService.off("songStarted", songQueuedListener);
-      res.end();
-    });
+    res.json(response);
   }
 
   async _handleSearchQuerySubmit(req, res, query) {

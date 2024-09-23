@@ -10,21 +10,17 @@ const router = Router();
 // Up Status
 router.get("/status", (req, res) => res.json());
 
+// SSE live data
+router.get("/data", (req, res) => StreamClient.getLiveDataStream(req, res));
+
 // Stream Routes
 router.get("/stream", (req, res) => StreamClient.addClientToStream(req, res));
-router.get("/listeners", (req, res) => StreamClient.getListeners(req, res));
 
 // Song Routes
-router.get("/song/current", (req, res) =>
-  SongClient.getCurrentSongMetadata(req, res),
-);
-router.get("/song/history/:page", (req, res) =>
-  SongClient.getSongHistory(req, res),
-);
-router.get("/song/next", (req, res) => SongClient.getNextSong(req, res));
 router.post("/song/submit", (req, res) =>
   SongClient.submitSongRequest(req, res),
 );
+router.get("/history/:page", (req, res) => SongClient.getSongHistory(req, res));
 
 // Account Routes
 router.post("/register", (req, res) => AccountClient.register(req, res));
