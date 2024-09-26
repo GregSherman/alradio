@@ -31,6 +31,13 @@ class TrackModelService {
   async hasMetadataForTrackId(trackId) {
     return Track.exists({ trackId });
   }
+
+  async convertTrackIdToAppleMusicId(trackId) {
+    const track = await this.getSongMetadata(trackId);
+    const appleMusicUrl = track.urlForPlatform.appleMusic;
+    const appleMusicId = new URL(appleMusicUrl).searchParams.get("i");
+    return appleMusicId;
+  }
 }
 
 export default new TrackModelService();

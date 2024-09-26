@@ -29,6 +29,11 @@ const AccountSchema = new mongoose.Schema({
   spotifyRefreshToken: { type: String, default: "" },
   spotifyTokenExpiration: { type: Date, default: Date.now },
   spotifyQuickAddPlaylistId: { type: String, default: "" },
+
+  // Apple Music
+  appleMusicIsConnected: { type: Boolean, default: false },
+  appleMusicToken: { type: String, default: "" },
+  appleMusicQuickAddPlaylistId: { type: String, default: "" },
 });
 
 const Account = mongoose.model("Account", AccountSchema);

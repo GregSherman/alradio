@@ -4,6 +4,7 @@ import SongClient from "../client/SongClient.js";
 import AccountClient from "../client/AccountClient.js";
 import SpotifyClient from "../client/auth_services/SpotifyClient.js";
 import LastFMClient from "../client/auth_services/LastFMClient.js";
+import AppleMusicClient from "../client/auth_services/AppleMusicClient.js";
 
 const router = Router();
 
@@ -52,6 +53,15 @@ router.post("/auth/spotify/unlink", (req, res) =>
 );
 router.get("/auth/lastfm/callback", (req, res) =>
   LastFMClient.authorize(req, res),
+);
+router.get("/auth/applemusic/developerToken", (req, res) =>
+  AppleMusicClient.getDeveloperToken(req, res),
+);
+router.post("/auth/applemusic/callback", (req, res) =>
+  AppleMusicClient.authorize(req, res),
+);
+router.post("/auth/applemusic/add", (req, res) =>
+  AppleMusicClient.addSongToPlaylist(req, res),
 );
 
 // Admin Routes

@@ -38,6 +38,7 @@ class AccountModelService {
         numberOfSongsListened: 1,
         role: 1,
 
+        appleMusicIsConnected: 1,
         lastFMUsername: 1,
         spotifyUserId: 1,
         spotifyDisplayName: 1,
@@ -318,6 +319,62 @@ class AccountModelService {
     const user = await Account.findOne(
       { handle },
       { spotifyQuickAddPlaylistId: 1 },
+    ).exec();
+    return user || {};
+  }
+
+  // Apple Music
+  async addAppleMusicTokens(handle, token) {
+    log(
+      "info",
+      `Adding Apple Music tokens for ${handle}`,
+      this.constructor.name,
+    );
+    return Account.updateOne(
+      { handle },
+      {
+        $set: {
+          appleMusicToken: token,
+          appleMusicIsConnected: token ? true : false,
+        },
+      },
+    ).exec();
+  }
+
+  async addAppleMusicQuickAddPlaylistId(handle, playlistId) {
+    log(
+      "info",
+      `Adding Apple Music playlist ID for ${handle}`,
+      this.constructor.name,
+    );
+    return Account.updateOne(
+      { handle },
+      { $set: { appleMusicQuickAddPlaylistId: playlistId } },
+    ).exec();
+  }
+
+  async getAppleMusicTokens(handle) {
+    log(
+      "info",
+      `Fetching Apple Music tokens for ${handle}`,
+      this.constructor.name,
+    );
+    const user = await Account.findOne(
+      { handle },
+      { appleMusicToken: 1 },
+    ).exec();
+    return user || {};
+  }
+
+  async getAppleMusicQuickAddPlaylistId(handle) {
+    log(
+      "info",
+      `Fetching Apple Music playlist ID for ${handle}`,
+      this.constructor.name,
+    );
+    const user = await Account.findOne(
+      { handle },
+      { appleMusicQuickAddPlaylistId: 1 },
     ).exec();
     return user || {};
   }
