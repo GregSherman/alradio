@@ -125,7 +125,7 @@ class AppleMusicClient extends ClientService {
 
     log(
       "info",
-      `Got playlist ID: ${appleMusicPlaylistId}`,
+      `Got playlist ID from database: ${appleMusicPlaylistId}`,
       this.constructor.name,
     );
     if (appleMusicPlaylistId) {
@@ -139,9 +139,31 @@ class AppleMusicClient extends ClientService {
             },
           },
         );
+
+        if (!playlistResponse.data.data[0].attributes.canEdit) {
+          log(
+            "info",
+            `Playlist not editable, creating new playlist`,
+            this.constructor.name,
+          );
+          await AccountModelService.addAppleMusicQuickAddPlaylistId(
+            authHandle,
+            null,
+          );
+          return this._getOrCreatePlaylist(
+            musicUserToken,
+            authHandle,
+            playlistName,
+          );
+        }
         return playlistResponse.data.data[0];
       } catch (error) {
         if (error.response && error.response.status === 404) {
+          log(
+            "info",
+            `Playlist not found, creating new playlist`,
+            this.constructor.name,
+          );
           await AccountModelService.addAppleMusicQuickAddPlaylistId(
             authHandle,
             null,
