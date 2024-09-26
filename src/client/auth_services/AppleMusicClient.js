@@ -120,7 +120,7 @@ class AppleMusicClient extends ClientService {
     authHandle,
     playlistName = "AL Radio",
   ) {
-    const { getAppleMusicQuickAddPlaylistId: appleMusicPlaylistId } =
+    const { appleMusicQuickAddPlaylistId: appleMusicPlaylistId } =
       await AccountModelService.getAppleMusicQuickAddPlaylistId(authHandle);
 
     log(
