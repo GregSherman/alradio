@@ -18,6 +18,7 @@ class SongClient extends ClientService {
     const songHistory =
       await HistoryModelService.fetchMostRecentlyPlayedTracks(page);
     const isLastPage = await HistoryModelService.isLastPage(page);
+    const numberOfPages = await HistoryModelService.countNumberOfPages();
 
     // Do not send the current song in the history
     const currentTrackId = SongController.currentSongMetadata?.trackId;
@@ -35,6 +36,7 @@ class SongClient extends ClientService {
     const response = {
       tracks: clientifiedHistory,
       isLastPage,
+      numberOfPages,
     };
     res.json(response);
   }

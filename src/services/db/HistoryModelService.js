@@ -24,7 +24,7 @@ class HistoryModelService {
 
   async fetchMostRecentlyPlayedTracks(
     page = 1,
-    limit = 10,
+    limit = 25,
     userSubmittedId = null,
   ) {
     log(
@@ -50,7 +50,7 @@ class HistoryModelService {
     );
   }
 
-  async isLastPage(page, limit = 10, userSubmittedId = null) {
+  async isLastPage(page, limit = 25, userSubmittedId = null) {
     const query = userSubmittedId ? { userSubmittedId } : {};
     const totalTracks = await History.countDocuments(query);
     const result = page * limit >= totalTracks;
@@ -59,6 +59,14 @@ class HistoryModelService {
       `Checking if page ${page} is the last page: ${result}`,
       this.constructor.name,
     );
+    return result;
+  }
+
+  async countNumberOfPages(limit = 25, userSubmittedId = null) {
+    const query = userSubmittedId ? { userSubmittedId } : {};
+    const totalTracks = await History.countDocuments(query);
+    const result = Math.ceil(totalTracks / limit);
+    log("info", `Counting number of pages: ${result}`, this.constructor.name);
     return result;
   }
 
