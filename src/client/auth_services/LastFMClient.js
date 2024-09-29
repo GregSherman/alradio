@@ -41,6 +41,18 @@ class LastFMClient extends ClientService {
     }
   }
 
+  async removeAuthorization(req, res) {
+    const authHandle = this.authenticateStrict(req, res);
+    if (!authHandle) {
+      return;
+    }
+
+    await AccountModelService.addLastFMToken(authHandle, null);
+    await AccountModelService.addLastFMUsername(authHandle, null);
+
+    res.status(200).json({ message: "LastFM authorization removed" });
+  }
+
   // session key lasts forever
   async _getSessionKey(token) {
     const api_key = this._api_key;

@@ -53,7 +53,11 @@ class AppleMusicClient extends ClientService {
     }
 
     try {
-      await this._removeTokens(authHandle);
+      await AccountModelService.addAppleMusicTokens(authHandle, null);
+      await AccountModelService.addAppleMusicQuickAddPlaylistId(
+        authHandle,
+        null,
+      );
       res.status(200).json({ message: "Apple Music authorization removed" });
     } catch (error) {
       log(
@@ -65,10 +69,6 @@ class AppleMusicClient extends ClientService {
         .status(500)
         .json({ message: "Error removing Apple Music authorization" });
     }
-  }
-
-  async _removeTokens(authHandle) {
-    await AccountModelService.addAppleMusicTokens(authHandle, null);
   }
 
   async addSongToPlaylist(req, res) {

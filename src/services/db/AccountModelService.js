@@ -74,6 +74,7 @@ class AccountModelService {
         numberOfSongsListened: 1,
         role: 1,
 
+        appleMusicIsConnected: 1,
         lastFMUsername: 1,
         spotifyUserId: 1,
         spotifyDisplayName: 1,
