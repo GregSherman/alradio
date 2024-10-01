@@ -292,9 +292,18 @@ class AccountClient extends ClientService {
   }
 
   async getHistory(req, res) {
-    let { handle } = req.params;
+    let { handle, page } = req.params;
     handle = handle.trim().toLowerCase();
-    const page = req.query.page || 1;
+
+    page = parseInt(page);
+    if (isNaN(page) || page < 1) {
+      log(
+        "info",
+        `Failed to fetch history for handle: ${handle}. Invalid page number: ${page}`,
+        this.constructor.name,
+      );
+      return res.status(400).json({ message: "Invalid page number" });
+    }
 
     log(
       "info",
@@ -306,7 +315,12 @@ class AccountClient extends ClientService {
       10,
       handle,
     );
-    res.json(history);
+    const isLastPage = await HistoryModelService.isLastPage(page, 10, handle);
+    const numberOfPages = await HistoryModelService.countNumberOfPages(
+      10,
+      handle,
+    );
+    res.json({ tracks: history, isLastPage, numberOfPages });
   }
 
   async getHandleAndPictureFromToken(req, res) {

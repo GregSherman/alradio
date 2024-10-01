@@ -37,7 +37,7 @@ router.post("/accounts", (req, res) => AccountClient.updateProfile(req, res));
 router.get("/accounts/:handle", (req, res) =>
   AccountClient.getPublicProfile(req, res),
 );
-router.get("/accounts/:handle/history", (req, res) =>
+router.get("/accounts/:handle/history/:page", (req, res) =>
   AccountClient.getHistory(req, res),
 );
 
