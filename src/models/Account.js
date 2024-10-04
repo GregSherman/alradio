@@ -16,6 +16,8 @@ const AccountSchema = new mongoose.Schema({
   location: { type: String, default: "" },
   numberOfSongsListened: { type: Number, default: 0 },
   passwordHash: { type: String, required: true },
+  passwordResetToken: { type: String, default: "" },
+  passwordResetTokenExpiration: { type: Date, default: Date.now },
   role: { type: String, default: "user" },
 
   // LastFM

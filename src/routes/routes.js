@@ -27,6 +27,8 @@ router.get("/history/:page", (req, res) => SongClient.getSongHistory(req, res));
 router.post("/register", (req, res) => AccountClient.register(req, res));
 router.post("/login", (req, res) => AccountClient.login(req, res));
 router.post("/logout", (req, res) => AccountClient.logout(req, res));
+router.post("/forgot", (req, res) => AccountClient.forgotPassword(req, res));
+router.post("/reset", (req, res) => AccountClient.changePassword(req, res));
 router.get("/handle", (req, res) =>
   AccountClient.getHandleAndPictureFromToken(req, res),
 );

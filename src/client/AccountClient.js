@@ -10,8 +10,14 @@ import emailValidator from "email-validator";
 import StreamClient from "./StreamClient.js";
 import ClientManager from "./ClientManager.js";
 import { log } from "../utils/logger.js";
+import Mailjet from "node-mailjet";
 
 class AccountClient extends ClientService {
+  _mailjet = new Mailjet({
+    apiKey: process.env.MAILJET_API_KEY,
+    apiSecret: process.env.MAILJET_API_SECRET,
+  });
+
   async register(req, res) {
     let { handle, password, email, ...profileData } = req.body;
     log(
@@ -98,42 +104,14 @@ class AccountClient extends ClientService {
       return res.status(400).json({ message: "Handle contains profanity" });
     }
 
-    if (password.length < 8) {
+    const passwordError = await this._validatePassword(password);
+    if (passwordError) {
       log(
         "info",
-        "Failed to register user: Password must be at least 8 characters long",
+        `Failed to register user: ${passwordError}`,
         this.constructor.name,
       );
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 8 characters long" });
-    }
-
-    if (password.length > 256) {
-      log(
-        "info",
-        "Failed to register user: Password must be at most 256 characters long",
-        this.constructor.name,
-      );
-      return res
-        .status(400)
-        .json({ message: "Password must be at most 256 characters long" });
-    }
-
-    if (
-      !/[a-zA-Z]/.test(password) ||
-      !/[0-9]/.test(password) ||
-      !/[!@#$%^&*]/.test(password)
-    ) {
-      log(
-        "info",
-        "Failed to register user: Password must contain a letter, number, and special character",
-        this.constructor.name,
-      );
-      return res.status(400).json({
-        message:
-          "Password must contain a letter, number, and special character",
-      });
+      return res.status(400).json({ message: passwordError });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -211,6 +189,121 @@ class AccountClient extends ClientService {
     const streamId = StreamClient.getOrGenerateStreamId(req, res);
     await ClientManager.changeClientHandle(authHandle, streamId);
     res.json({});
+  }
+
+  async forgotPassword(req, res) {
+    let { email } = req.body;
+
+    log(
+      "info",
+      `Attempting to reset password for email: ${email}`,
+      this.constructor.name,
+    );
+
+    email = email.trim().toLowerCase();
+    if (!emailValidator.validate(email)) {
+      log(
+        "info",
+        "Failed to reset password: Invalid email address",
+        this.constructor.name,
+      );
+      return res.status(400).json({ message: "Invalid email address" });
+    }
+
+    const { passwordResetToken } =
+      await AccountModelService.generatePasswordResetToken(email);
+
+    if (!passwordResetToken) {
+      log(
+        "info",
+        `Failed to reset password for email: ${email}. Email not found`,
+        this.constructor.name,
+      );
+      return res.status(404).json({ message: "Email not found" });
+    }
+
+    const request = this._mailjet.post("send").request({
+      FromEmail: "als-assistant@alradio.live",
+      FromName: "AL's Assistant",
+      Subject: "AL Radio Password Reset",
+      "Text-part": `Use this code to reset your password: ${passwordResetToken}`,
+      "Html-part": `Use this code to reset your password: <b>${passwordResetToken}</b>`,
+      Recipients: [{ Email: email }],
+    });
+
+    request
+      .then(() => {
+        log(
+          "info",
+          `Password reset email sent to: ${email}`,
+          this.constructor.name,
+        );
+        res.json({
+          message:
+            "An email has been sent with instructions to reset your password",
+        });
+      })
+      .catch((err) => {
+        log(
+          "info",
+          `Failed to send password reset email to: ${email}. ${err}`,
+          this.constructor.name,
+        );
+        res
+          .status(500)
+          .json({ message: "Failed to send password reset email" });
+      });
+  }
+
+  async changePassword(req, res) {
+    let { email, password, code } = req.body;
+
+    log(
+      "info",
+      `Attempting to change password for email: ${email}`,
+      this.constructor.name,
+    );
+
+    email = email.trim().toLowerCase();
+
+    const user = await AccountModelService.getUserByEmail(email);
+
+    if (!user) {
+      log(
+        "info",
+        `Failed to change password for email: ${email}. Email not found`,
+        this.constructor.name,
+      );
+      return res.status(404).json({ message: "Email not found" });
+    }
+
+    if (
+      user.passwordResetToken !== code ||
+      user.passwordResetTokenExpiration < new Date()
+    ) {
+      log(
+        "info",
+        `Failed to change password for email: ${email}. Invalid or expired password reset token`,
+        this.constructor.name,
+      );
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired password reset token" });
+    }
+
+    const passwordError = await this._validatePassword(password);
+    if (passwordError) {
+      log(
+        "info",
+        `Failed to register user: ${passwordError}`,
+        this.constructor.name,
+      );
+      return res.status(400).json({ message: passwordError });
+    }
+
+    await AccountModelService.updatePassword(user.handle, password);
+    res.json({ message: "Password changed successfully" });
+    AccountModelService.removePasswordResetToken(email);
   }
 
   async getPublicProfile(req, res) {
@@ -477,6 +570,24 @@ class AccountClient extends ClientService {
     );
     QueueService.editAudioQueue(req.body);
     res.json({ message: "Audio queue updated successfully" });
+  }
+
+  async _validatePassword(password) {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+
+    if (password.length > 256) {
+      return "Password must be at most 256 characters long";
+    }
+
+    if (
+      !/[a-zA-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[!@#$%^&*]/.test(password)
+    ) {
+      return "Password must contain a letter, number, and special character";
+    }
   }
 }
 

@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import ClientManager from "../../client/ClientManager.js";
 import { log } from "../../utils/logger.js";
 import EventService from "../EventService.js";
+import crypto from "crypto";
 
 const PERMISSION_MAP = {
   noRateLimit: ["admin"],
@@ -91,6 +92,7 @@ class AccountModelService {
       `Checking if email ${email} is taken: ${result}`,
       this.constructor.name,
     );
+    return result;
   }
 
   async isHandleTaken(handle) {
@@ -100,6 +102,7 @@ class AccountModelService {
       `Checking if handle ${handle} is taken: ${result}`,
       this.constructor.name,
     );
+    return result;
   }
 
   async isAdmin(handle) {
@@ -113,6 +116,15 @@ class AccountModelService {
     return result;
   }
 
+  async getUserByEmail(email) {
+    log(
+      "info",
+      `Fetching user by email address ${email}`,
+      this.constructor.name,
+    );
+    return Account.findOne({ email }).exec();
+  }
+
   async authorizeUser(handle, password) {
     log("info", `Authorizing user ${handle}`, this.constructor.name);
     const user = await Account.findOne({ handle }).exec();
@@ -120,6 +132,55 @@ class AccountModelService {
       return false;
     }
     return bcrypt.compare(password, user.passwordHash);
+  }
+
+  async generatePasswordResetToken(email) {
+    log(
+      "info",
+      `Generating password reset token for ${email}`,
+      this.constructor.name,
+    );
+
+    const token = crypto
+      .randomBytes(5)
+      .toString("hex")
+      .toUpperCase()
+      .slice(0, 10);
+    const expiration = new Date();
+    expiration.setHours(expiration.getHours() + 1);
+
+    await Account.updateOne(
+      { email },
+      {
+        $set: {
+          passwordResetToken: token,
+          passwordResetExpiration: expiration,
+        },
+      },
+    ).exec();
+
+    return Account.findOne({ email }).exec();
+  }
+
+  async updatePassword(handle, password) {
+    log("info", `Updating password for ${handle}`, this.constructor.name);
+    const hash = await bcrypt.hash(password, 10);
+    return Account.updateOne(
+      { handle },
+      { $set: { passwordHash: hash } },
+    ).exec();
+  }
+
+  async removePasswordResetToken(email) {
+    log(
+      "info",
+      `Removing password reset token for ${email}`,
+      this.constructor.name,
+    );
+    return Account.updateOne(
+      { email },
+      { $set: { passwordResetToken: "", passwordResetExpiration: new Date() } },
+    ).exec();
   }
 
   async updateUserProfile(handle, updateData) {

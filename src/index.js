@@ -60,7 +60,12 @@ app.use((req, res, next) => {
     },
     () => {
       if (requestUrl !== "/status") logFullContext("info", "");
-      next();
+      try {
+        next();
+      } catch (err) {
+        log("error", `Error: ${err.stack}`);
+        res.status(500).send("Something went wrong.");
+      }
     },
   );
 });
